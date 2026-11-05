@@ -1104,47 +1104,223 @@ select.form-control {
   }
 }
 
-/* ================= RESPONSIVE DESIGN ================= */
+/* ================= RESPONSIVE & MOBILE PHONE APP DESIGN ================= */
+@media (min-width: 769px) {
+  .mobile-bottom-bar {
+    display: none !important;
+  }
+}
+
 @media (max-width: 900px) {
   .app-sidebar {
     transform: translateX(-100%);
+    z-index: 1040;
   }
   .app-sidebar.mobile-open {
     transform: translateX(0);
   }
   .app-main {
-    margin-left: 0;
+    margin-left: 0 !important;
   }
   .mobile-menu-toggle {
-    display: block;
-  }
-  .kpi-grid {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    display: block !important;
   }
   .form-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
   }
   .form-group-full {
-    grid-column: span 1;
+    grid-column: span 1 !important;
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
+  /* Prevent browser auto-zoom on mobile inputs */
+  input, select, textarea, button {
+    font-size: 16px !important;
+  }
+
+  /* Compact Sticky Header on Phone */
+  .app-header {
+    padding: 0 0.75rem !important;
+    height: 54px !important;
+  }
+  .page-headline h2 {
+    font-size: 1.05rem !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 170px;
+  }
+  .page-headline p {
+    display: none !important;
+  }
+
+  /* Hide verbose text buttons on mobile header (use bottom bar instead) */
+  #btnOpenAddCategory,
+  #btnOpenAddSite,
+  #btnNewTransaction {
+    display: none !important;
+  }
+
+  /* Header icon buttons */
+  #btnChangePassword span:not(:first-child),
+  .header-right a.btn span:not(:first-child) {
+    display: none !important;
+  }
+  #btnChangePassword,
+  .header-right a.btn {
+    padding: 6px 10px !important;
+    font-size: 1.15rem !important;
+    border-radius: 8px !important;
+  }
+
+  /* Page Content with safe padding for bottom bar */
+  .app-main {
+    padding-bottom: 74px !important;
+  }
   .page-content {
-    padding: 1rem;
+    padding: 0.85rem !important;
+    padding-bottom: 80px !important;
+  }
+
+  /* Sticky Mobile Bottom Navigation Bar */
+  .mobile-bottom-bar {
+    display: flex !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 62px !important;
+    background: #163F37 !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.35) !important;
+    z-index: 1020 !important;
+    align-items: center !important;
+    justify-content: space-around !important;
+    padding: 0 4px !important;
+  }
+  .mobile-nav-item {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #A7F3D0 !important;
+    text-decoration: none !important;
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+    background: none !important;
+    border: none !important;
+    cursor: pointer !important;
+    padding: 4px 6px !important;
+    flex: 1 !important;
+    transition: all 0.2s ease !important;
+  }
+  .mobile-nav-item.active,
+  .mobile-nav-item:hover,
+  .mobile-nav-item:active {
+    color: #FCD34D !important;
+  }
+  .mobile-nav-item .m-icon {
+    font-size: 1.35rem !important;
+    margin-bottom: 2px !important;
+    line-height: 1 !important;
+  }
+  .mobile-nav-item .m-label {
+    letter-spacing: 0.02em !important;
+  }
+
+  /* Center Floating Action Button (New Entry) */
+  .mobile-nav-action-btn {
+    width: 54px !important;
+    height: 54px !important;
+    border-radius: 50% !important;
+    background: linear-gradient(135deg, #D97706, #F59E0B) !important;
+    color: #FFFFFF !important;
+    border: 3.5px solid #163F37 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-top: -24px !important;
+    box-shadow: 0 6px 16px rgba(217, 119, 6, 0.6) !important;
+    cursor: pointer !important;
+    font-size: 1.5rem !important;
+    font-weight: bold !important;
+    line-height: 1 !important;
+    transition: transform 0.15s ease !important;
+  }
+  .mobile-nav-action-btn:active {
+    transform: scale(0.92) !important;
+  }
+  .mobile-nav-action-btn .m-label {
+    font-size: 0.62rem !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    margin-top: 1px !important;
+  }
+
+  /* KPI Grid & Cards on Phone */
+  .kpi-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.65rem !important;
+  }
+  .kpi-card {
+    padding: 0.85rem !important;
+    border-radius: 12px !important;
+  }
+  .kpi-title {
+    font-size: 0.75rem !important;
   }
   .kpi-value {
-    font-size: 1.35rem;
+    font-size: 1.15rem !important;
   }
+  .kpi-subtext {
+    display: none !important;
+  }
+
+  /* Modals on Mobile: Bottom-sheet feel with easy scrolling */
+  .modal-overlay {
+    padding: 0.5rem !important;
+    align-items: flex-end !important;
+    background: rgba(11, 32, 28, 0.75) !important;
+  }
+  .modal-container {
+    max-height: 90vh !important;
+    width: 100% !important;
+    border-radius: 20px 20px 8px 8px !important;
+    margin: 0 !important;
+  }
+  .modal-body {
+    padding: 1.25rem 1rem !important;
+    max-height: 70vh !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  .modal-header {
+    padding: 1.25rem 1rem 1rem !important;
+  }
+
+  /* Table Smooth Horizontal Touch Scrolling */
+  .table-responsive,
+  .table-card {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    border-radius: 12px !important;
+  }
+  .data-table {
+    min-width: 650px !important;
+  }
+
+  /* Voucher Paper on Phone */
   .voucher-paper {
-    padding: 1.25rem;
+    padding: 1.25rem !important;
   }
   .voucher-amount-box {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
   }
   .amount-in-words {
-    max-width: 100%;
+    max-width: 100% !important;
   }
 }

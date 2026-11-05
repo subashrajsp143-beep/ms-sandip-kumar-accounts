@@ -135,6 +135,30 @@
         </div>
     </div>
 
+    <!-- MOBILE BOTTOM APP NAVIGATION BAR (Always visible on mobile phones) -->
+    <nav class="mobile-bottom-bar">
+        <a href="{{ url_for('dashboard') }}" class="mobile-nav-item {% if active_page == 'dashboard' %}active{% endif %}">
+            <span class="m-icon">📊</span>
+            <span class="m-label">डैशबोर्ड</span>
+        </a>
+        <a href="{{ url_for('transactions_view') }}" class="mobile-nav-item {% if active_page == 'transactions' %}active{% endif %}">
+            <span class="m-icon">📑</span>
+            <span class="m-label">खाता</span>
+        </a>
+        <button type="button" class="mobile-nav-action-btn" id="mBtnNewEntry" onclick="document.getElementById('btnNewTransaction').click()" title="नया वाउचर एंट्री">
+            <span class="m-action-icon">+</span>
+            <span class="m-label">एंट्री</span>
+        </button>
+        <a href="{{ url_for('daybook_view') }}" class="mobile-nav-item {% if active_page == 'daybook' %}active{% endif %}">
+            <span class="m-icon">📅</span>
+            <span class="m-label">डेबुक</span>
+        </a>
+        <button type="button" class="mobile-nav-item" onclick="openChangePasswordModal()" title="पासवर्ड बदलें">
+            <span class="m-icon">🔐</span>
+            <span class="m-label">पासवर्ड</span>
+        </button>
+    </nav>
+
     <!-- UNIVERSAL TRANSACTION ENTRY & EDIT MODAL -->
     <div class="modal-overlay" id="txModal">
         <div class="modal-container">
@@ -350,11 +374,14 @@
                     <div id="pwAlertBox" style="display:none; margin-bottom:1rem; padding:0.75rem; border-radius:8px; font-size:0.85rem; font-weight:600;"></div>
                     
                     <div class="form-group" style="margin-bottom:1rem;">
-                        <label style="font-weight:700; font-size:0.88rem; color:#163F37; display:block; margin-bottom:0.35rem;">
-                            वर्तमान (पुराना) पासवर्ड <span style="color:red">*</span>
-                        </label>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
+                            <label style="font-weight:700; font-size:0.88rem; color:#163F37; margin:0;">
+                                वर्तमान (पुराना) पासवर्ड
+                            </label>
+                            <span style="font-size:0.75rem; color:#D97706; font-weight:600;">(डिफ़ॉल्ट 123456 या खाली छोड़ें)</span>
+                        </div>
                         <div style="position:relative;">
-                            <input type="password" id="oldPasswordInput" name="old_password" class="form-control" placeholder="मौजूदा पासवर्ड दर्ज करें (डिफ़ॉल्ट: 123456)" required style="width:100%; padding-right:40px;">
+                            <input type="password" id="oldPasswordInput" name="old_password" class="form-control" placeholder="डिफ़ॉल्ट 123456 (खाली भी छोड़ सकते हैं)" style="width:100%; padding-right:40px;">
                             <button type="button" onclick="togglePasswordVisibility('oldPasswordInput', this)" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:1rem; color:#64748B;">👁️</button>
                         </div>
                     </div>

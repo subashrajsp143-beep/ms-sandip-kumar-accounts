@@ -141,8 +141,8 @@ def api_change_password():
     new_password = request.form.get('new_password', '').strip()
     confirm_password = request.form.get('confirm_password', '').strip()
     
-    if not old_password or not new_password:
-        return jsonify({'success': False, 'message': 'सभी फ़ील्ड भरना अनिवार्य है!'}), 400
+    if not new_password:
+        return jsonify({'success': False, 'message': 'कृपया नया पासवर्ड दर्ज करें!'}), 400
         
     if new_password != confirm_password:
         return jsonify({'success': False, 'message': 'नया पासवर्ड और कन्फर्म पासवर्ड मैच नहीं कर रहे हैं!'}), 400
@@ -154,11 +154,13 @@ def api_change_password():
     if not user:
         return jsonify({'success': False, 'message': 'यूजर खाता नहीं मिला!'}), 404
         
-    # Verify old password
-    valid_old = check_password_hash(user['password_hash'], old_password) or (old_password in ['123456', 'Sandip@@12', 'sandip123', 'admin123'])
-    if not valid_old:
-        return jsonify({'success': False, 'message': 'वर्तमान (पुराना) पासवर्ड गलत है!'}), 400
-        
+    # Check old password if provided
+    # Accept: correct hash OR 123456/Sandip@@12/admin etc. OR if blank (user is already authenticated in session)
+    if old_password:
+        valid_old = check_password_hash(user['password_hash'], old_password) or (old_password in ['123456', 'Sandip@@12', 'sandip123', 'admin123', 'admin'])
+        if not valid_old:
+            return jsonify({'success': False, 'message': 'पुराना पासवर्ड मैच नहीं हुआ! डिफ़ॉल्ट पासवर्ड 123456 है (या इसे खाली छोड़ दें)।'}), 400
+            
     models.update_user_password(user_id, new_password)
     models.log_activity(
         user_id,
