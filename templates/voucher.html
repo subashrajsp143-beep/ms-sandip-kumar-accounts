@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Voucher {{ tx.voucher_no }} — M/S Sandip Kumar{% endblock %}
+{% block page_title %}Official Payment / Receipt Voucher{% endblock %}
+{% block page_subtitle %}Formal printable accounting voucher for site records & audit compliance{% endblock %}
+
+{% block content %}
+<div class="no-print" style="margin-bottom: 1.5rem; display:flex; justify-content:space-between; align-items:center;">
+    <a href="{{ url_for('transactions_view') }}" class="btn btn-outline">
+        &larr; Back to Transactions (वापस जाएं)
+    </a>
+
+    <div style="display:flex; gap:0.5rem;">
+        <button type="button" class="btn btn-outline" onclick="openEditTransaction({{ tx.id }})">
+            ✏️ Edit Voucher
+        </button>
+        <button type="button" class="btn btn-primary" onclick="window.print()">
+            🖨️ Print Voucher (वाउचर प्रिंट करें)
+        </button>
+    </div>
+</div>
+
+<!-- FORMAL PRINTABLE VOUCHER PAPER -->
+<div class="voucher-paper">
+    <!-- HEADER -->
+    <div class="voucher-header-grid">
+        <div class="voucher-logo-badge">SK</div>
+        <div class="voucher-firm-details">
+            <div class="voucher-firm-name">M/S SANDIP KUMAR</div>
+            <div class="voucher-firm-sub">GOVERNMENT & JJM BIHAR CONTRACTOR</div>
+            <div style="font-size: 0.78rem; color: #4B5563; margin-top: 2px;">
+                Specialized in Rural Piped Water Schemes, Deep Tubewells, Pump Houses & OHT Infrastructure
+            </div>
+        </div>
+        <div class="voucher-type-box {% if tx.tx_type == 'CREDIT' %}voucher-type-credit{% else %}voucher-type-debit{% endif %}">
+            <div class="voucher-type-text">
+                {% if tx.tx_type == 'CREDIT' %}
+                CREDIT VOUCHER<br><span style="font-size:0.75rem; font-weight:normal;">प्राप्ति वाउचर</span>
+                {% else %}
+                DEBIT VOUCHER<br><span style="font-size:0.75rem; font-weight:normal;">भुगतान वाउचर</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- META TABLE -->
+    <table class="voucher-meta-table">
+        <tr>
+            <td class="voucher-meta-label">Voucher Number:</td>
+            <td style="font-weight: 700; font-size:1.05rem; color:var(--primary);">{{ tx.voucher_no }}</td>
+            <td class="voucher-meta-label">Date (दिनांक):</td>
+            <td style="font-weight: 700;">{{ tx.tx_date }}</td>
+        </tr>
+        <tr>
+            <td class="voucher-meta-label">
+                {% if tx.tx_type == 'CREDIT' %}
+                Account Credited (खाता):
+                {% else %}
+                JJM Site / Scheme (साइट):
+                {% endif %}
+            </td>
+            <td colspan="3" style="font-weight: 600;">
+                {% if tx.tx_type == 'CREDIT' %}
+                <span class="badge" style="background:#EAF5EF; color:#065F46; font-size:0.85rem;">M/S Sandip Kumar — Central Firm Account</span>
+                {% else %}
+                <span class="badge badge-site">{{ tx.site_code }}</span> 
+                {{ tx.site_name }} ({{ tx.site_district }} District)
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td class="voucher-meta-label">
+                {% if tx.tx_type == 'CREDIT' %}
+                Received From (देने वाले व्यक्ति का नाम):
+                {% else %}
+                Paid To (किसको भुगतान):
+                {% endif %}
+            </td>
+            <td colspan="3" style="font-weight: 700; font-size: 1.05rem; color: #111827;">
+                {{ tx.party_name }}
+            </td>
+        </tr>
+        <tr>
+            <td class="voucher-meta-label">Head of Account / Purpose:</td>
+            <td colspan="3">{{ tx.category }}</td>
+        </tr>
+        <tr>
+            <td class="voucher-meta-label">Payment Mode:</td>
+            <td>
+                <strong>{{ tx.payment_mode }}</strong>
+            </td>
+            <td class="voucher-meta-label">UTR / Cheque / Ref:</td>
+            <td>{{ tx.reference_no or '—' }}</td>
+        </tr>
+        <tr>
+            <td class="voucher-meta-label">Narration / Particulars:</td>
+            <td colspan="3" style="color: #374151; font-style: italic;">
+                {{ tx.narration or 'No additional narration provided.' }}
+            </td>
+        </tr>
+        {% if tx.attachment_path %}
+        <tr class="no-print">
+            <td class="voucher-meta-label">Attached Bill / Proof:</td>
+            <td colspan="3">
+                <a href="{{ url_for('view_upload', filename=tx.attachment_path) }}" target="_blank" style="color:var(--info); font-weight:600;">
+                    📎 View Attached Document ({{ tx.attachment_path }})
+                </a>
+            </td>
+        </tr>
+        {% endif %}
+    </table>
+
+    <!-- AMOUNT HIGHLIGHT BOX -->
+    <div class="voucher-amount-box">
+        <div>
+            <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:var(--text-muted); margin-bottom:4px;">
+                Amount in Words (अक्षरों में):
+            </div>
+            <div class="amount-in-words">
+                {{ amount_in_words }}
+            </div>
+        </div>
+
+        <div style="text-align:right;">
+            <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:var(--text-muted); margin-bottom:4px;">
+                Total Amount (रकम ₹):
+            </div>
+            <div class="amount-in-figures">
+                ₹ {{ "{:,.2f}".format(tx.amount) }}
+            </div>
+        </div>
+    </div>
+
+    <!-- 3 SIGNATURE BOXES -->
+    <div class="voucher-sign-grid">
+        <div class="sign-box">
+            <div style="font-size:0.8rem; color:#6B7280; margin-bottom: 25px;">Prepared By:</div>
+            <div class="sign-title">{{ tx.created_by_name or 'Accounts Executive' }}</div>
+            <div class="sign-sub">Accountant Signature</div>
+        </div>
+
+        <div class="sign-box">
+            <div style="font-size:0.8rem; color:#6B7280; margin-bottom: 25px;">Verified By:</div>
+            <div class="sign-title">Site Supervisor / Accounts Head</div>
+            <div class="sign-sub">Checked & Verified</div>
+        </div>
+
+        <div class="sign-box">
+            <div style="font-size:0.8rem; color:#6B7280; margin-bottom: 25px;">Sanctioned By:</div>
+            <div class="sign-title">SANDIP KUMAR</div>
+            <div class="sign-sub">Proprietor / Authorized Signatory</div>
+        </div>
+    </div>
+
+    <div style="margin-top: 3rem; text-align:center; font-size: 0.72rem; color: #9CA3AF; border-top: 1px solid #F1F5F9; padding-top: 0.5rem;">
+        Computer Generated Accounting Voucher — M/S Sandip Kumar Finance System | Timestamp: {{ tx.created_at }}
+    </div>
+</div>
+{% endblock %}

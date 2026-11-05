@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Daily Daybook (Cashflow) — M/S Sandip Kumar{% endblock %}
+{% block page_title %}Daily Daybook & Cashflow{% endblock %}
+{% block page_subtitle %}Comprehensive daily summary of inflows, outflows, cash & bank transactions{% endblock %}
+
+{% block content %}
+<!-- DATE PICKER TOOLBAR -->
+<div class="filter-card">
+    <div class="filter-group">
+        <span class="form-label-inline" style="font-size:0.9rem; font-weight:700; color:var(--primary);">Select Daybook Date:</span>
+        <input type="date" id="daybookDateInput" class="form-control" value="{{ selected_date }}" style="font-size:0.95rem; font-weight:600;" onchange="changeDaybookDate(this.value)">
+    </div>
+
+    <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+        <button type="button" class="btn btn-outline" onclick="triggerPrint()">
+            <span>🖨️ Print Daybook</span>
+        </button>
+        <button type="button" class="btn btn-outline" style="background:#25D366; color:white; border-color:#25D366;" onclick="shareDaybookWhatsApp()">
+            <span>📲 Share on WhatsApp</span>
+        </button>
+        <a href="{{ url_for('export_daybook_view', date=selected_date) }}" class="btn btn-outline" title="Download Excel Daybook">
+            <span>📥 Export Excel (.xlsx)</span>
+        </a>
+    </div>
+</div>
+
+<!-- DAY SUMMARY CARDS -->
+<div class="kpi-grid">
+    <!-- Day Total Credit -->
+    <div class="kpi-card card-credit">
+        <div class="kpi-header">
+            <span class="kpi-title">Day Total Credit (Inflow)</span>
+            <div class="kpi-icon">📈</div>
+        </div>
+        <div class="kpi-value">₹ {{ "{:,.2f}".format(daybook.total_credit) }}</div>
+        <div class="kpi-subtext">Cash In: ₹ {{ "{:,.2f}".format(daybook.day_cash_in) }} | Bank In: ₹ {{ "{:,.2f}".format(daybook.day_bank_in) }}</div>
+    </div>
+
+    <!-- Day Total Debit -->
+    <div class="kpi-card card-debit">
+        <div class="kpi-header">
+            <span class="kpi-title">Day Total Debit (Expenses)</span>
+            <div class="kpi-icon">📉</div>
+        </div>
+        <div class="kpi-value">₹ {{ "{:,.2f}".format(daybook.total_debit) }}</div>
+        <div class="kpi-subtext">Cash Out: ₹ {{ "{:,.2f}".format(daybook.day_cash_out) }} | Bank Out: ₹ {{ "{:,.2f}".format(daybook.day_bank_out) }}</div>
+    </div>
+
+    <!-- Net Day Cashflow -->
+    <div class="kpi-card card-net">
+        <div class="kpi-header">
+            <span class="kpi-title">Net Daily Cashflow</span>
+            <div class="kpi-icon">💼</div>
+        </div>
+        <div class="kpi-value" style="color: {% if daybook.net_day_change >= 0 %}var(--success){% else %}var(--danger){% endif %};">
+            ₹ {{ "{:,.2f}".format(daybook.net_day_change) }}
+        </div>
+        <div class="kpi-subtext">Net addition/reduction to firm treasury today</div>
+    </div>
+</div>
+
+<!-- DAYBOOK DETAILS TABLE -->
+<div class="table-card">
+    <div class="table-card-header">
+        <div class="table-card-title">
+            <span>📅 Daybook Transactions for {{ selected_date }}</span>
+        </div>
+        <span style="font-size:0.85rem; font-weight:600; color:var(--text-muted);">
+            Total {{ daybook.transactions|length }} entries recorded
+        </span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>Voucher No</th>
+                    <th>Type</th>
+                    <th>Site</th>
+                    <th>Party & Narration</th>
+                    <th>Category</th>
+                    <th>Mode & Reference</th>
+                    <th style="text-align:right;">Credit (₹)</th>
+                    <th style="text-align:right;">Debit (₹)</th>
+                    <th style="text-align:center;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tx in daybook.transactions %}
+                <tr>
+                    <td style="color:var(--text-muted); text-align:center;">{{ loop.index }}</td>
+                    <td>
+                        <a href="{{ url_for('voucher_view', tx_id=tx.id) }}" style="font-weight:700; color:var(--primary);" title="Print Voucher">
+                            {{ tx.voucher_no }} 🖨️
+                        </a>
+                    </td>
+                    <td>
+                        <span class="badge {% if tx.tx_type == 'CREDIT' %}badge-credit{% else %}badge-debit{% endif %}">
+                            {{ tx.tx_type }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge badge-site">{{ tx.site_code }} — {{ tx.site_name }}</span>
+                    </td>
+                    <td>
+                        <strong>{{ tx.party_name }}</strong>
+                        {% if tx.narration %}
+                        <div style="font-size:0.75rem; color:var(--text-muted);">{{ tx.narration }}</div>
+                        {% endif %}
+                    </td>
+                    <td>{{ tx.category }}</td>
+                    <td>
+                        <span class="badge badge-mode">{{ tx.payment_mode }}</span>
+                        {% if tx.reference_no %}
+                        <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">{{ tx.reference_no }}</div>
+                        {% endif %}
+                    </td>
+                    <td style="text-align:right;">
+                        {% if tx.tx_type == 'CREDIT' %}
+                        <span class="amount-credit">+ ₹ {{ "{:,.2f}".format(tx.amount) }}</span>
+                        {% else %}
+                        —
+                        {% endif %}
+                    </td>
+                    <td style="text-align:right;">
+                        {% if tx.tx_type == 'DEBIT' %}
+                        <span class="amount-debit">- ₹ {{ "{:,.2f}".format(tx.amount) }}</span>
+                        {% else %}
+                        —
+                        {% endif %}
+                    </td>
+                    <td style="text-align:center; white-space:nowrap;">
+                        <a href="{{ url_for('voucher_view', tx_id=tx.id) }}" class="btn btn-outline btn-sm" title="Print Formal Voucher">🖨️</a>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="duplicateTransaction({{ tx.id }})" title="Duplicate / Copy Entry">📋</button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="openEditTransaction({{ tx.id }})" title="Edit">✏️</button>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="deleteTransaction({{ tx.id }}, '{{ tx.voucher_no }}')" title="Delete Entry">🗑️</button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="10" style="text-align:center; padding: 2.5rem; color:var(--text-muted);">
+                        No transactions recorded for {{ selected_date }}.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="7" style="text-align:right; font-weight:bold;">DAY TOTAL:</td>
+                    <td style="text-align:right; font-weight:bold; color:var(--success);">
+                        ₹ {{ "{:,.2f}".format(daybook.total_credit) }}
+                    </td>
+                    <td style="text-align:right; font-weight:bold; color:var(--danger);">
+                        ₹ {{ "{:,.2f}".format(daybook.total_debit) }}
+                    </td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function changeDaybookDate(val) {
+    if (val) {
+        window.location.href = `{{ url_for('daybook_view') }}?date=${val}`;
+    }
+}
+
+function shareDaybookWhatsApp() {
+    const date = "{{ selected_date }}";
+    const totalCredit = "{{ '{:,.2f}'.format(daybook.total_credit) }}";
+    const totalDebit = "{{ '{:,.2f}'.format(daybook.total_debit) }}";
+    const netChange = "{{ '{:,.2f}'.format(daybook.net_day_change) }}";
+    const count = "{{ daybook.transactions|length }}";
+
+    let text = `*M/S SANDIP KUMAR — DAILY HISAB*\n`;
+    text += `📅 *Date:* ${date}\n`;
+    text += `--------------------------------\n`;
+    text += `📈 *Total Inflow (Credit):* Rs. ${totalCredit}\n`;
+    text += `📉 *Total Expenses (Debit):* Rs. ${totalDebit}\n`;
+    text += `💼 *Net Cashflow:* Rs. ${netChange}\n`;
+    text += `📝 *Total Entries:* ${count}\n`;
+    text += `--------------------------------\n`;
+    text += `_M/S Sandip Kumar - JJM Bihar Contractor Portal_`;
+
+    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+    window.open(whatsappUrl, '_blank');
+}
+</script>
+</script>
+{% endblock %}

@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}Transactions Ledger — M/S Sandip Kumar{% endblock %}
+{% block page_title %}Financial Ledger & All Transactions{% endblock %}
+{% block page_subtitle %}Full records of all Credit inflows and Debit expenses across sites{% endblock %}
+
+{% block content %}
+<!-- QUICK DATE PILLS & CUSTOM RANGE -->
+<div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1rem; flex-wrap:wrap; background:#FFFFFF; padding:0.6rem 1rem; border-radius:10px; border:1px solid var(--border-color); box-shadow:var(--shadow-sm);">
+    <span style="font-size:0.82rem; font-weight:700; color:var(--primary); margin-right:4px;">⚡ Quick Filter:</span>
+    <button type="button" class="btn btn-sm {% if date_filter == 'today' %}btn-primary{% else %}btn-outline{% endif %}" onclick="setDateFilter('today')">
+        Today
+    </button>
+    <button type="button" class="btn btn-sm {% if date_filter == 'yesterday' %}btn-primary{% else %}btn-outline{% endif %}" onclick="setDateFilter('yesterday')">
+        Yesterday
+    </button>
+    <button type="button" class="btn btn-sm {% if date_filter == 'this_week' %}btn-primary{% else %}btn-outline{% endif %}" onclick="setDateFilter('this_week')">
+        This Week
+    </button>
+    <button type="button" class="btn btn-sm {% if date_filter == 'this_month' %}btn-primary{% else %}btn-outline{% endif %}" onclick="setDateFilter('this_month')">
+        This Month
+    </button>
+    <button type="button" class="btn btn-sm {% if (date_filter == 'all' or not date_filter) and not start_date and not end_date %}btn-primary{% else %}btn-outline{% endif %}" onclick="setDateFilter('all')">
+        All Dates
+    </button>
+
+    <!-- Custom Date Range -->
+    <div style="display:inline-flex; align-items:center; gap:0.35rem; margin-left:0.5rem; padding-left:0.5rem; border-left:1px solid var(--border-color);">
+        <span style="font-size:0.78rem; font-weight:600; color:var(--text-muted);">From:</span>
+        <input type="date" id="customStartDate" class="form-control" style="padding:0.25rem 0.5rem; font-size:0.8rem; width:135px;" value="{{ start_date }}">
+        <span style="font-size:0.78rem; font-weight:600; color:var(--text-muted);">To:</span>
+        <input type="date" id="customEndDate" class="form-control" style="padding:0.25rem 0.5rem; font-size:0.8rem; width:135px;" value="{{ end_date }}">
+        <button type="button" class="btn btn-sm btn-primary" onclick="applyCustomDateRange()">Apply</button>
+        {% if start_date or end_date %}
+        <button type="button" class="btn btn-sm btn-outline" onclick="setDateFilter('all')" title="Reset Date Range">✕</button>
+        {% endif %}
+    </div>
+
+    <span style="margin-left:auto; font-size:0.75rem; color:var(--text-muted);">
+        ⌨️ Press <strong>[+]</strong> or <strong>[Alt+N]</strong> for New Entry | <strong>[Alt+S]</strong> Add Site
+    </span>
+</div>
+
+<!-- FILTER & ACTION TOOLBAR -->
+<div class="filter-card">
+    <div class="filter-group">
+        <input type="text" id="tableSearchInput" class="form-control" placeholder="🔍 Search Party, Voucher, UTR, etc..." style="min-width: 260px;">
+
+        <select id="filterType" class="form-control" onchange="applyTxFilters()">
+            <option value="all" {% if current_type == 'all' %}selected{% endif %}>All Types (Credit & Debit)</option>
+            <option value="CREDIT" {% if current_type == 'CREDIT' %}selected{% endif %}>Credit Only (Inflow)</option>
+            <option value="DEBIT" {% if current_type == 'DEBIT' %}selected{% endif %}>Debit Only (Expenses)</option>
+        </select>
+
+        <select id="filterSite" class="form-control" onchange="applyTxFilters()">
+            <option value="all" {% if current_site == 'all' %}selected{% endif %}>All Sites (21 Sites + HO)</option>
+            {% for s in all_sites %}
+                <option value="{{ s.id }}" {% if current_site|string == s.id|string %}selected{% endif %}>
+                    {{ s.code }} — {{ s.name }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <select id="filterCategory" class="form-control" onchange="applyTxFilters()">
+            <option value="all" {% if current_category == 'all' %}selected{% endif %}>All Categories</option>
+            {% for cat in all_categories %}
+                <option value="{{ cat.name }}" {% if current_category == cat.name %}selected{% endif %}>{{ cat.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div style="display:flex; gap:0.5rem; align-items:center;">
+        <button type="button" class="btn btn-primary" onclick="document.getElementById('btnNewTransaction').click()">
+            <span>+ New Entry</span>
+        </button>
+        <a href="{{ url_for('export_all_transactions_view', tx_type=current_type, site_id=current_site, category=current_category) }}" class="btn btn-outline" title="Download Excel for CA Audit / Tally">
+            <span>📥 Excel Download</span>
+        </a>
+    </div>
+</div>
+
+<!-- TRANSACTIONS TABLE CARD -->
+<div class="table-card">
+    <div class="table-card-header">
+        <div class="table-card-title">
+            <span>📑 Master Transaction Book ({{ transactions|length }} Entries)</span>
+        </div>
+        <div style="font-size: 0.85rem; font-weight:600; color:var(--text-muted);">
+            Total Credit: <span style="color:var(--success);">₹ {{ "{:,.2f}".format(total_credit) }}</span> | 
+            Total Debit: <span style="color:var(--danger);">₹ {{ "{:,.2f}".format(total_debit) }}</span>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table" id="transactionsTable">
+            <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>Date</th>
+                    <th>Voucher No</th>
+                    <th>Type</th>
+                    <th>Site</th>
+                    <th>Party / Description</th>
+                    <th>Category</th>
+                    <th>Mode & Ref</th>
+                    <th>Bill / Attachment</th>
+                    <th style="text-align:right;">Amount (₹)</th>
+                    <th style="text-align:center;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tx in transactions %}
+                <tr>
+                    <td style="color:var(--text-muted); text-align:center;">{{ loop.index }}</td>
+                    <td>{{ tx.tx_date }}</td>
+                    <td>
+                        <a href="{{ url_for('voucher_view', tx_id=tx.id) }}" style="font-weight:700; color:var(--primary);" title="Click to view & print formal voucher">
+                            {{ tx.voucher_no }} 🖨️
+                        </a>
+                    </td>
+                    <td>
+                        <span class="badge {% if tx.tx_type == 'CREDIT' %}badge-credit{% else %}badge-debit{% endif %}">
+                            {{ tx.tx_type }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if tx.tx_type == 'CREDIT' %}
+                        <span class="badge" style="background:#EAF5EF; color:#065F46; border:1px solid #A7F3D0;">👤 Individual Inflow</span>
+                        {% else %}
+                        <span class="badge badge-site">{{ tx.site_code }} — {{ tx.site_name }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <strong>{{ tx.party_name }}</strong>
+                        {% if tx.narration %}
+                        <div style="font-size:0.75rem; color:var(--text-muted);">{{ tx.narration }}</div>
+                        {% endif %}
+                    </td>
+                    <td>{{ tx.category }}</td>
+                    <td>
+                        <span class="badge badge-mode">{{ tx.payment_mode }}</span>
+                        {% if tx.reference_no %}
+                        <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">{{ tx.reference_no }}</div>
+                        {% endif %}
+                    </td>
+                    <td style="text-align:center;">
+                        {% if tx.attachment_path %}
+                        <a href="{{ url_for('view_upload', filename=tx.attachment_path) }}" target="_blank" class="btn btn-outline btn-sm" title="View attached bill / invoice">
+                            📎 View Bill
+                        </a>
+                        {% else %}
+                        <span style="color:#94A3B8; font-size:0.75rem;">None</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align:right;">
+                        <span class="{% if tx.tx_type == 'CREDIT' %}amount-credit{% else %}amount-debit{% endif %}">
+                            {% if tx.tx_type == 'CREDIT' %}+{% else %}-{% endif %} ₹ {{ "{:,.2f}".format(tx.amount) }}
+                        </span>
+                    </td>
+                    <td style="text-align:center; white-space:nowrap;">
+                        <a href="{{ url_for('voucher_view', tx_id=tx.id) }}" class="btn btn-outline btn-sm" title="Print Formal Voucher">
+                            🖨️
+                        </a>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="duplicateTransaction({{ tx.id }})" title="Duplicate / Copy Entry">
+                            📋
+                        </button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="openEditTransaction({{ tx.id }})" title="Edit Transaction">
+                            ✏️
+                        </button>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="deleteTransaction({{ tx.id }}, '{{ tx.voucher_no }}')" title="Delete Entry">
+                            🗑️
+                        </button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="11" style="text-align:center; padding: 2.5rem; color:var(--text-muted);">
+                        No transactions found. Click "+ New Entry" above to record your first entry.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="9" style="text-align:right; font-weight:bold;">TOTAL SUMMARY:</td>
+                    <td style="text-align:right; font-weight:bold;">
+                        Net: ₹ {{ "{:,.2f}".format(total_credit - total_debit) }}
+                    </td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function setDateFilter(df) {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('start_date');
+    url.searchParams.delete('end_date');
+    url.searchParams.set('date_filter', df);
+    window.location.href = url.toString();
+}
+
+function applyCustomDateRange() {
+    const start = document.getElementById('customStartDate').value;
+    const end = document.getElementById('customEndDate').value;
+    const url = new URL(window.location.href);
+    url.searchParams.delete('date_filter');
+    if (start) url.searchParams.set('start_date', start);
+    else url.searchParams.delete('start_date');
+    if (end) url.searchParams.set('end_date', end);
+    else url.searchParams.delete('end_date');
+    window.location.href = url.toString();
+}
+
+function applyTxFilters() {
+    const type = document.getElementById('filterType').value;
+    const site = document.getElementById('filterSite').value;
+    const cat = document.getElementById('filterCategory').value;
+    const url = new URL(window.location.href);
+    url.searchParams.set('tx_type', type);
+    url.searchParams.set('site_id', site);
+    url.searchParams.set('category', cat);
+    window.location.href = url.toString();
+}
+</script>
+{% endblock %}

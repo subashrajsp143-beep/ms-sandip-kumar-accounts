@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+
+{% block title %}Executive Financial Dashboard — M/S Sandip Kumar{% endblock %}
+{% block page_title %}Master Financial Dashboard{% endblock %}
+{% block page_subtitle %}Comprehensive overview of 21 JJM Bihar Project Sites & Central Treasury{% endblock %}
+
+{% block content %}
+<!-- FILTER TOOLBAR -->
+<div class="filter-card">
+    <div class="filter-group">
+        <span class="form-label-inline">Financial Year:</span>
+        <select id="filterFY" class="form-control">
+            <option value="all" {% if selected_fy == 'all' %}selected{% endif %}>All Financial Years</option>
+            <option value="FY 2024-25" {% if selected_fy == 'FY 2024-25' %}selected{% endif %}>FY 2024-25</option>
+            <option value="FY 2025-26" {% if selected_fy == 'FY 2025-26' %}selected{% endif %}>FY 2025-26</option>
+            <option value="FY 2026-27" {% if selected_fy == 'FY 2026-27' %}selected{% endif %}>FY 2026-27 (Current)</option>
+        </select>
+
+        <span class="form-label-inline" style="margin-left:0.5rem;">Month:</span>
+        <select id="filterMonth" class="form-control">
+            <option value="all" {% if selected_month == 'all' %}selected{% endif %}>All Months</option>
+            <option value="2026-10" {% if selected_month == '2026-10' %}selected{% endif %}>October 2026</option>
+            <option value="2026-09" {% if selected_month == '2026-09' %}selected{% endif %}>September 2026</option>
+            <option value="2026-08" {% if selected_month == '2026-08' %}selected{% endif %}>August 2026</option>
+        </select>
+
+        <span class="form-label-inline" style="margin-left:0.5rem;">Site:</span>
+        <select id="filterSite" class="form-control">
+            <option value="all" {% if selected_site == 'all' %}selected{% endif %}>All 21 Sites + Head Office</option>
+            {% for s in all_sites %}
+                <option value="{{ s.id }}" {% if selected_site|string == s.id|string %}selected{% endif %}>
+                    {{ s.code }} — {{ s.name }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div>
+        <a href="{{ url_for('site_ledger_view') }}" class="btn btn-outline btn-sm">
+            <span>🏗️ Site Ledgers</span>
+        </a>
+        <a href="{{ url_for('daybook_view') }}" class="btn btn-outline btn-sm">
+            <span>📅 Today's Daybook</span>
+        </a>
+    </div>
+</div>
+
+<!-- KPI CARDS -->
+<div class="kpi-grid">
+    <!-- Total Credit -->
+    <div class="kpi-card card-credit">
+        <div class="kpi-header">
+            <span class="kpi-title">Total Credit (Inflow)</span>
+            <div class="kpi-icon">📈</div>
+        </div>
+        <div class="kpi-value">₹ {{ "{:,.2f}".format(summary.total_credit) }}</div>
+        <div class="kpi-subtext">Department RA Bills, Capital & Inflows</div>
+    </div>
+
+    <!-- Total Debit -->
+    <div class="kpi-card card-debit">
+        <div class="kpi-header">
+            <span class="kpi-title">Total Debit (Expenses)</span>
+            <div class="kpi-icon">📉</div>
+        </div>
+        <div class="kpi-value">₹ {{ "{:,.2f}".format(summary.total_debit) }}</div>
+        <div class="kpi-subtext">Material, Labor, Equipment & Site Imprest</div>
+    </div>
+
+    <!-- Net Balance -->
+    <div class="kpi-card card-net">
+        <div class="kpi-header">
+            <span class="kpi-title">Net Balance (Surplus / Reserve)</span>
+            <div class="kpi-icon">💼</div>
+        </div>
+        <div class="kpi-value" style="color: {% if summary.net_balance >= 0 %}var(--success){% else %}var(--danger){% endif %};">
+            ₹ {{ "{:,.2f}".format(summary.net_balance) }}
+        </div>
+        <div class="kpi-subtext">Credit Inflow minus Outflow Expenses</div>
+    </div>
+
+    <!-- Treasury: Cash in Hand (Owner View / General) -->
+    <div class="kpi-card card-cash">
+        <div class="kpi-header">
+            <span class="kpi-title">Total Cash in Hand</span>
+            <div class="kpi-icon">💵</div>
+        </div>
+        <div class="kpi-value">₹ {{ "{:,.2f}".format(summary.cash_balance) }}</div>
+        <div class="kpi-subtext">Available Petty Cash across sites & HO</div>
+    </div>
+
+    <!-- Treasury: Bank Balance -->
+    <div class="kpi-card card-bank">
+        <div class="kpi-header">
+            <span class="kpi-title">Total Bank Balance</span>
+            <div class="kpi-icon">🏦</div>
+        </div>
+        <div class="kpi-value">₹ {{ "{:,.2f}".format(summary.bank_balance) }}</div>
+        <div class="kpi-subtext">SBI, Axis & Project Current Accounts</div>
+    </div>
+</div>
+
+<!-- CHARTS ROW (ONLY SHOWN WHEN TRANSACTIONS EXIST) -->
+{% if summary.total_count > 0 %}
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
+    <!-- Site Wise Expenses Chart -->
+    <div class="table-card" style="padding: 1.25rem;">
+        <div class="table-card-header" style="padding: 0 0 1rem 0; border-bottom: 1px solid var(--border-color);">
+            <div class="table-card-title">
+                <span>🏗️ Top Sites Expense Comparison</span>
+            </div>
+            <span style="font-size:0.75rem; color:var(--text-muted);">21 JJM Sites</span>
+        </div>
+        <div style="height: 300px; margin-top: 1rem; position: relative;">
+            <canvas id="siteExpensesChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Category Expense Breakdown Chart -->
+    <div class="table-card" style="padding: 1.25rem;">
+        <div class="table-card-header" style="padding: 0 0 1rem 0; border-bottom: 1px solid var(--border-color);">
+            <div class="table-card-title">
+                <span>📊 Head of Account Expense Breakdown</span>
+            </div>
+            <span style="font-size:0.75rem; color:var(--text-muted);">Pipes, Cement, Labor, etc.</span>
+        </div>
+        <div style="height: 300px; margin-top: 1rem; position: relative;">
+            <canvas id="categoryExpensesChart"></canvas>
+        </div>
+    </div>
+</div>
+{% else %}
+<!-- ZERO BALANCE CLEAN EMPTY STATE -->
+<div class="table-card" style="padding: 2.5rem 1.5rem; text-align: center; margin-bottom: 1.5rem; background: #FFFFFF; border: 2px dashed #CBD5E1;">
+    <div style="font-size: 2.4rem; margin-bottom: 0.5rem;">📊</div>
+    <h3 style="color: var(--primary); font-size: 1.2rem; font-weight: 700; margin-bottom: 0.4rem;">
+        Zero Initial Balance (Current Balance: ₹ 0.00)
+    </h3>
+    <p style="color: var(--text-muted); font-size: 0.9rem; max-width: 540px; margin: 0 auto 1.25rem; line-height: 1.5;">
+        No transactions recorded yet. All 21 JJM Project Sites and Central Pool balances are cleanly at ₹ 0.00. Click the button below to record your first transaction.
+    </p>
+    <button type="button" class="btn btn-primary" onclick="document.getElementById('btnNewTransaction').click()">
+        <span>+ Add First Entry (VCH-2026-0001)</span>
+    </button>
+</div>
+{% endif %}
+
+<!-- RECENT TRANSACTIONS TABLE -->
+<div class="table-card">
+    <div class="table-card-header">
+        <div class="table-card-title">
+            <span>📑 Recent Financial Entries</span>
+        </div>
+        <a href="{{ url_for('transactions_view') }}" class="btn btn-outline btn-sm">
+            View All Transactions &rarr;
+        </a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Voucher No</th>
+                    <th>Type</th>
+                    <th>Site</th>
+                    <th>Party / Description</th>
+                    <th>Category</th>
+                    <th>Mode</th>
+                    <th style="text-align:right;">Amount (₹)</th>
+                    <th style="text-align:center;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tx in recent_transactions %}
+                <tr>
+                    <td>{{ tx.tx_date }}</td>
+                    <td>
+                        <a href="{{ url_for('voucher_view', tx_id=tx.id) }}" style="font-weight:700; color:var(--primary);" title="Print Voucher">
+                            {{ tx.voucher_no }} 🖨️
+                        </a>
+                    </td>
+                    <td>
+                        <span class="badge {% if tx.tx_type == 'CREDIT' %}badge-credit{% else %}badge-debit{% endif %}">
+                            {{ tx.tx_type }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if tx.tx_type == 'CREDIT' %}
+                        <span class="badge" style="background:#EAF5EF; color:#065F46; border:1px solid #A7F3D0;">👤 Individual Inflow</span>
+                        {% else %}
+                        <span class="badge badge-site">{{ tx.site_code }} — {{ tx.site_name }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <strong>{{ tx.party_name }}</strong>
+                        {% if tx.narration %}
+                        <div style="font-size:0.75rem; color:var(--text-muted);">{{ tx.narration }}</div>
+                        {% endif %}
+                    </td>
+                    <td>{{ tx.category }}</td>
+                    <td>
+                        <span class="badge badge-mode">{{ tx.payment_mode }}</span>
+                    </td>
+                    <td style="text-align:right;">
+                        <span class="{% if tx.tx_type == 'CREDIT' %}amount-credit{% else %}amount-debit{% endif %}">
+                            {% if tx.tx_type == 'CREDIT' %}+{% else %}-{% endif %} ₹ {{ "{:,.2f}".format(tx.amount) }}
+                        </span>
+                    </td>
+                    <td style="text-align:center; white-space:nowrap;">
+                        <a href="{{ url_for('voucher_view', tx_id=tx.id) }}" class="btn btn-outline btn-sm" title="Print Formal Voucher">
+                            🖨️
+                        </a>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="duplicateTransaction({{ tx.id }})" title="Duplicate / Copy Entry">
+                            📋
+                        </button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="openEditTransaction({{ tx.id }})" title="Edit Transaction">
+                            ✏️
+                        </button>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="deleteTransaction({{ tx.id }}, '{{ tx.voucher_no }}')" title="Delete Entry">
+                            🗑️
+                        </button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" style="text-align:center; padding: 2rem; color:var(--text-muted);">
+                        No transactions recorded for the selected filter. Click "New Entry (+)" above to add one.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Site Expenses Chart (Only if canvas exists and real data is present)
+    const siteCanvas = document.getElementById('siteExpensesChart');
+    if (siteCanvas) {
+        const siteData = {{ site_chart_data | tojson }};
+        const ctxSite = siteCanvas.getContext('2d');
+        
+        // Filter sites with actual expenses
+        const sortedSites = [...siteData].sort((a, b) => b.site_debit - a.site_debit).filter(s => (s.site_debit > 0 || s.site_credit > 0)).slice(0, 8);
+        const siteLabels = sortedSites.map(s => s.site_name);
+        const siteDebits = sortedSites.map(s => s.site_debit);
+        const siteCredits = sortedSites.map(s => s.site_credit);
+
+        if (sortedSites.length > 0) {
+            new Chart(ctxSite, {
+                type: 'bar',
+                data: {
+                    labels: siteLabels,
+                    datasets: [
+                        {
+                            label: 'Kharcha (Expenses ₹)',
+                            data: siteDebits,
+                            backgroundColor: '#DC2626',
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'Credit (RA Bills ₹)',
+                            data: siteCredits,
+                            backgroundColor: '#059669',
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ₹ ' + context.raw.toLocaleString('en-IN');
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '₹ ' + (value / 100000) + ' L';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // 2. Category Expenses Chart (Only if canvas exists and real data is present)
+    const catCanvas = document.getElementById('categoryExpensesChart');
+    if (catCanvas) {
+        const catData = {{ cat_chart_data | tojson }};
+        const ctxCat = catCanvas.getContext('2d');
+        
+        const catLabels = catData.map(c => c.category);
+        const catAmounts = catData.map(c => c.cat_total);
+        const catColors = [
+            '#059669', '#D97706', '#2563EB', '#DC2626', 
+            '#7C3AED', '#EA580C', '#4B5563', '#0891B2', '#9333EA'
+        ];
+
+        if (catAmounts.length > 0) {
+            new Chart(ctxCat, {
+                type: 'doughnut',
+                data: {
+                    labels: catLabels,
+                    datasets: [{
+                        data: catAmounts,
+                        backgroundColor: catColors,
+                        borderWidth: 2,
+                        borderColor: '#FFFFFF'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const val = context.raw || 0;
+                                    return context.label + ': ₹ ' + val.toLocaleString('en-IN');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+});
+</script>
+{% endblock %}

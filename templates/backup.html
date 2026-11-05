@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}Master Treasury & Backup — M/S Sandip Kumar{% endblock %}
+{% block page_title %}Treasury & Database Persistence{% endblock %}
+{% block page_subtitle %}Firm financial reserves, audit trail, and zero-data-loss database backup{% endblock %}
+
+{% block content %}
+<!-- TREASURY OVERVIEW -->
+<div class="kpi-grid">
+    <div class="kpi-card card-net">
+        <div class="kpi-header">
+            <span class="kpi-title">Firm Capital & Net Reserve</span>
+            <span class="badge" style="background:#EAF5EF; color:#163F37; font-weight:700;">Central Treasury</span>
+        </div>
+        <div class="kpi-value" style="color:var(--success);">
+            ₹ {{ "{:,.2f}".format(summary.net_balance) }}
+        </div>
+        <div class="kpi-subtext">Overall cumulative surplus across all 21 sites</div>
+    </div>
+
+    <div class="kpi-card card-cash">
+        <div class="kpi-header">
+            <span class="kpi-title">Total Cash in Hand (नकद कोष)</span>
+            <div class="kpi-icon">💵</div>
+        </div>
+        <div class="kpi-value">₹ {{ "{:,.2f}".format(summary.cash_balance) }}</div>
+        <div class="kpi-subtext">Physical currency with Head Office & Site Supervisors</div>
+    </div>
+
+    <div class="kpi-card card-bank">
+        <div class="kpi-header">
+            <span class="kpi-title">Total Bank Liquid Balance (बैंक शेष)</span>
+            <div class="kpi-icon">🏦</div>
+        </div>
+        <div class="kpi-value">₹ {{ "{:,.2f}".format(summary.bank_balance) }}</div>
+        <div class="kpi-subtext">Current accounts (SBI, Axis, HDFC)</div>
+    </div>
+</div>
+
+<!-- BACKUP & RESTORE UTILITIES -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+    <!-- 1-Click SQLite DB Download -->
+    <div class="table-card" style="padding: 1.5rem;">
+        <div class="table-card-title" style="margin-bottom: 0.75rem;">
+            <span>💾 1-Click Database Backup</span>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+            Download the raw production SQLite database file (<code>sandip_accounts.db</code>) to keep on a secure pen-drive or Google Drive without data loss.
+        </p>
+        <a href="{{ url_for('download_raw_db') }}" class="btn btn-primary" style="width: 100%;">
+            <span>📥 Download sandip_accounts.db</span>
+        </a>
+    </div>
+
+    <!-- Restore Database Backup -->
+    <div class="table-card" style="padding: 1.5rem;">
+        <div class="table-card-title" style="margin-bottom: 0.75rem;">
+            <span>🔄 Restore Database Backup</span>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+            Upload a previously backed-up <code>.db</code> file to restore records.
+        </p>
+        <form action="{{ url_for('restore_database') }}" method="POST" enctype="multipart/form-data" onsubmit="return confirm('WARNING: Restoring will replace current database. Proceed?');">
+            <input type="file" name="db_file" class="form-control" accept=".db,.sqlite,.sqlite3" required style="margin-bottom: 1rem;">
+            <button type="submit" class="btn btn-outline" style="width: 100%; border-color: var(--accent); color: var(--accent);">
+                <span>⚠️ Upload & Restore</span>
+            </button>
+        </form>
+    </div>
+
+    <!-- Zero Out / Reset All Balances Card -->
+    <div class="table-card" style="padding: 1.5rem; border-color: #FECACA; background: #FFFBFB;">
+        <div class="table-card-title" style="margin-bottom: 0.75rem; color: #DC2626;">
+            <span>🧹 Reset / Zero All Balances</span>
+        </div>
+        <p style="font-size: 0.85rem; color: #7F1D1D; margin-bottom: 1rem;">
+            Wipes all transactions so that Total Credit, Total Debit, Cash, Bank, and all 21 site balances become cleanly <strong>₹ 0.00</strong>.
+        </p>
+        <form action="{{ url_for('reset_all_data') }}" method="POST" onsubmit="return confirm('SURE? Kya aap sach me sabhi transactions delete karke balance ZERO karna chahte hain?');">
+            <button type="submit" class="btn btn-danger" style="width: 100%;">
+                <span>🗑️ Zero Out All Balances (सभी शून्य करें)</span>
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- 21 SITES FINANCIAL PROFITABILITY COMPARISON -->
+<div class="table-card">
+    <div class="table-card-header">
+        <div class="table-card-title">
+            <span>🏗️ Site-by-Site Financial Standing (21 Sites + Head Office)</span>
+        </div>
+        <span class="badge" style="background:#F1F5F9; color:#475569;">21 JJM Sites Summary</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Site Code</th>
+                    <th>Site Name & District</th>
+                    <th style="text-align:right;">Total Credit / RA Bills (₹)</th>
+                    <th style="text-align:right;">Total Debit / Expenses (₹)</th>
+                    <th style="text-align:right;">Net Margin / Reserve (₹)</th>
+                    <th style="text-align:center;">Ledger Link</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in site_stats %}
+                <tr>
+                    <td><strong>{{ s.site_code }}</strong></td>
+                    <td>{{ s.site_name }} ({{ s.district }})</td>
+                    <td style="text-align:right; color:var(--success); font-weight:600;">
+                        ₹ {{ "{:,.2f}".format(s.site_credit) }}
+                    </td>
+                    <td style="text-align:right; color:var(--danger); font-weight:600;">
+                        ₹ {{ "{:,.2f}".format(s.site_debit) }}
+                    </td>
+                    <td style="text-align:right; font-weight:bold; color: {% if s.site_balance >= 0 %}var(--success){% else %}var(--danger){% endif %};">
+                        ₹ {{ "{:,.2f}".format(s.site_balance) }}
+                    </td>
+                    <td style="text-align:center;">
+                        <a href="{{ url_for('site_ledger_view', site_id=s.site_id) }}" class="btn btn-outline btn-sm">
+                            Open Ledger &rarr;
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- RECENT AUDIT LOGS -->
+<div class="table-card">
+    <div class="table-card-header">
+        <div class="table-card-title">
+            <span>🛡️ System Security & Audit Activity Logs</span>
+        </div>
+        <span style="font-size:0.8rem; color:var(--text-muted);">Timestamped user actions</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Timestamp</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Details</th>
+                    <th>IP Address</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in audit_logs %}
+                <tr>
+                    <td style="color:var(--text-muted);">#{{ log.id }}</td>
+                    <td>{{ log.created_at }}</td>
+                    <td><strong>{{ log.username }}</strong></td>
+                    <td><span class="badge" style="background:#E2E8F0; color:#1E293B;">{{ log.action }}</span></td>
+                    <td>{{ log.details }}</td>
+                    <td style="font-family:monospace; font-size:0.8rem;">{{ log.ip_address }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" style="text-align:center; padding: 1.5rem; color:var(--text-muted);">
+                        No security logs found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

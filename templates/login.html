@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Access — M/S Sandip Kumar Accounts & Finance</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .login-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at 10% 20%, #163F37 0%, #0B201C 90%);
+            padding: 1.5rem;
+        }
+        .login-card {
+            background: #FFFFFF;
+            width: 100%;
+            max-width: 520px;
+            border-radius: var(--radius-xl);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .login-header {
+            background-color: #163F37;
+            padding: 2.25rem 2rem 1.75rem;
+            text-align: center;
+            color: #FFFFFF;
+            border-bottom: 3px solid #D97706;
+        }
+        .login-logo {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 1rem;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #D97706, #F59E0B);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            font-weight: 800;
+            box-shadow: 0 4px 12px rgba(217, 119, 6, 0.4);
+        }
+        .login-body {
+            padding: 2.25rem 2rem;
+        }
+        .profile-entry-card {
+            display: block;
+            background: #FFFFFF;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1.25rem;
+            text-decoration: none;
+            color: var(--text-main);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+        .profile-entry-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .profile-entry-owner {
+            border-color: #D97706;
+            background: linear-gradient(to right, #FFFDF9, #FFFFFF);
+        }
+        .profile-entry-owner:hover {
+            border-color: #B45309;
+            background: #FEF3C7;
+        }
+        .profile-entry-accountant {
+            border-color: #163F37;
+            background: linear-gradient(to right, #F9FBFA, #FFFFFF);
+        }
+        .profile-entry-accountant:hover {
+            border-color: #0E2B25;
+            background: #EAF5EF;
+        }
+        .profile-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        .profile-title {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #163F37;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .profile-desc {
+            font-size: 0.82rem;
+            color: #4B5563;
+            line-height: 1.4;
+            margin-bottom: 0.75rem;
+        }
+        .profile-btn-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #D97706;
+        }
+        .profile-entry-accountant .profile-btn-indicator {
+            color: #059669;
+        }
+        .badge-no-pin {
+            display: inline-block;
+            background: #ECFDF5;
+            color: #065F46;
+            border: 1px solid #A7F3D0;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body class="login-page">
+    <div class="login-card">
+        <div class="login-header">
+            <div class="login-logo">SK</div>
+            <h2 style="font-size: 1.3rem; font-weight: 800; letter-spacing: 0.02em;">M/S SANDIP KUMAR</h2>
+            <div style="font-size: 0.85rem; color: #A7F3D0; font-weight: 600; margin-top: 4px;">
+                JAL JEEVAN MISSION, BIHAR CONTRACTOR
+            </div>
+            <div style="font-size: 0.75rem; color: rgba(255,255,255,0.7); margin-top: 4px;">
+                Accounts & Finance Management System
+            </div>
+        </div>
+
+        <div class="login-body">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert-box alert-{{ 'danger' if category == 'error' else category }}" style="margin-bottom: 1.25rem;">
+                            <span>{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <span class="badge-no-pin">⚡ Direct 1-Click Access (No Password / PIN Needed)</span>
+                <p style="font-size: 0.88rem; color: #64748B; margin-top: 0.5rem; font-weight: 500;">
+                    Select your profile to enter immediately:
+                </p>
+            </div>
+
+            <!-- 1-Click Owner Access -->
+            <a href="{{ url_for('login', role='owner') }}" class="profile-entry-card profile-entry-owner">
+                <div class="profile-card-header">
+                    <span class="profile-title">
+                        👑 Sandip Kumar (Owner)
+                    </span>
+                    <span class="owner-tag">Proprietor Access</span>
+                </div>
+                <div class="profile-desc">
+                    Complete treasury control, cash & bank balance, profit/loss matrix, audit controls, and database backups.
+                </div>
+                <div class="profile-btn-indicator">
+                    <span>Click to Enter as Owner &rarr;</span>
+                </div>
+            </a>
+
+            <!-- 1-Click Accountant Access -->
+            <a href="{{ url_for('login', role='accountant') }}" class="profile-entry-card profile-entry-accountant">
+                <div class="profile-card-header">
+                    <span class="profile-title">
+                        💼 Senior Accountant
+                    </span>
+                    <span class="badge" style="background:#EAF5EF; color:#047857;">Daily Accounts</span>
+                </div>
+                <div class="profile-desc">
+                    Daily Credit & Debit voucher entries, site ledgers for 21 sites, vendor khatas, and 1-click Excel downloads.
+                </div>
+                <div class="profile-btn-indicator">
+                    <span>Click to Enter as Accountant &rarr;</span>
+                </div>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+
+{% block title %}Party & Vendor Khata — M/S Sandip Kumar{% endblock %}
+{% block page_title %}Party / Vendor Khata & Supplier Statement{% endblock %}
+{% block page_subtitle %}Track outstanding balances, payments and invoices by vendor or contractor{% endblock %}
+
+{% block content %}
+<!-- PARTY SELECTOR -->
+<div class="filter-card">
+    <div class="filter-group">
+        <span class="form-label-inline" style="font-size:0.9rem; font-weight:700; color:var(--primary);">Select Party / Vendor:</span>
+        <select id="partySelect" class="form-control" style="font-size:0.95rem; font-weight:600; min-width:320px;" onchange="changeParty(this.value)">
+            <option value="">-- Choose Party / Supplier --</option>
+            {% for p in all_parties %}
+                <option value="{{ p.party_name }}" {% if selected_party == p.party_name %}selected{% endif %}>
+                    {{ p.party_name }} ({{ p.tx_count }} Entries)
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    {% if selected_party %}
+    <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+        <button type="button" class="btn btn-primary" onclick="openNewEntryForParty('{{ selected_party }}')">
+            <span>+ Add Payment / Bill for this Party</span>
+        </button>
+        <button type="button" class="btn btn-outline" style="background:#25D366; color:white; border-color:#25D366;" onclick="sharePartyKhataWhatsApp()">
+            <span>📲 Share on WhatsApp</span>
+        </button>
+        <button type="button" class="btn btn-outline" onclick="triggerPrint()">
+            <span>🖨️ Print Statement</span>
+        </button>
+        <a href="{{ url_for('export_party_ledger_view', party_name=selected_party) }}" class="btn btn-outline" title="Download Excel Khata">
+            <span>📥 Export Excel (.xlsx)</span>
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+{% if party_data %}
+<!-- PARTY SUMMARY KPI -->
+<div class="kpi-grid">
+    <!-- Total Inflow / Credit -->
+    <div class="kpi-card card-credit">
+        <div class="kpi-header">
+            <span class="kpi-title">Total Credit (Received)</span>
+            <div class="kpi-icon">📈</div>
+        </div>
+        <div class="kpi-value">₹ {{ "{:,.2f}".format(party_data.total_credit) }}</div>
+        <div class="kpi-subtext">Received from this party / client</div>
+    </div>
+
+    <!-- Total Outflow / Debit -->
+    <div class="kpi-card card-debit">
+        <div class="kpi-header">
+            <span class="kpi-title">Total Debit (Paid)</span>
+            <div class="kpi-icon">📉</div>
+        </div>
+        <div class="kpi-value">₹ {{ "{:,.2f}".format(party_data.total_debit) }}</div>
+        <div class="kpi-subtext">Payments made to vendor / supplier</div>
+    </div>
+
+    <!-- Net Settlement Balance -->
+    <div class="kpi-card card-net">
+        <div class="kpi-header">
+            <span class="kpi-title">Net Account Balance</span>
+            <div class="kpi-icon">💼</div>
+        </div>
+        <div class="kpi-value" style="color: {% if party_data.net_balance >= 0 %}var(--success){% else %}var(--danger){% endif %};">
+            ₹ {{ "{:,.2f}".format(party_data.net_balance) }}
+        </div>
+        <div class="kpi-subtext">
+            {% if party_data.net_balance < 0 %}
+            Paid in excess / Advance to vendor
+            {% else %}
+            Net payable / credit balance
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- PARTY STATEMENT TABLE -->
+<div class="table-card">
+    <div class="table-card-header">
+        <div class="table-card-title">
+            <span>🤝 Statement of Account: {{ party_data.party_name }}</span>
+        </div>
+        <span style="font-size:0.85rem; font-weight:600; color:var(--text-muted);">
+            Transactions across all sites
+        </span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>Date</th>
+                    <th>Voucher No</th>
+                    <th>Site</th>
+                    <th>Category / Head</th>
+                    <th>Mode & Ref</th>
+                    <th>Bill</th>
+                    <th style="text-align:right;">Credit (₹)</th>
+                    <th style="text-align:right;">Debit (₹)</th>
+                    <th style="text-align:center;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tx in party_data.transactions %}
+                <tr>
+                    <td style="color:var(--text-muted); text-align:center;">{{ loop.index }}</td>
+                    <td>{{ tx.tx_date }}</td>
+                    <td>
+                        <a href="{{ url_for('voucher_view', tx_id=tx.id) }}" style="font-weight:700; color:var(--primary);" title="Print Voucher">
+                            {{ tx.voucher_no }} 🖨️
+                        </a>
+                    </td>
+                    <td>
+                        <span class="badge badge-site">{{ tx.site_code }} — {{ tx.site_name }}</span>
+                    </td>
+                    <td>
+                        <strong>{{ tx.category }}</strong>
+                        {% if tx.narration %}
+                        <div style="font-size:0.75rem; color:var(--text-muted);">{{ tx.narration }}</div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge badge-mode">{{ tx.payment_mode }}</span>
+                        {% if tx.reference_no %}
+                        <div style="font-size:0.72rem; color:var(--text-muted);">{{ tx.reference_no }}</div>
+                        {% endif %}
+                    </td>
+                    <td style="text-align:center;">
+                        {% if tx.attachment_path %}
+                        <a href="{{ url_for('view_upload', filename=tx.attachment_path) }}" target="_blank" class="btn btn-outline btn-sm">📎 Bill</a>
+                        {% else %}
+                        <span style="color:#94A3B8; font-size:0.75rem;">None</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align:right;">
+                        {% if tx.tx_type == 'CREDIT' %}
+                        <span class="amount-credit">+ ₹ {{ "{:,.2f}".format(tx.amount) }}</span>
+                        {% else %}
+                        —
+                        {% endif %}
+                    </td>
+                    <td style="text-align:right;">
+                        {% if tx.tx_type == 'DEBIT' %}
+                        <span class="amount-debit">- ₹ {{ "{:,.2f}".format(tx.amount) }}</span>
+                        {% else %}
+                        —
+                        {% endif %}
+                    </td>
+                    <td style="text-align:center; white-space:nowrap;">
+                        <a href="{{ url_for('voucher_view', tx_id=tx.id) }}" class="btn btn-outline btn-sm" title="Print Voucher">🖨️</a>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="duplicateTransaction({{ tx.id }})" title="Duplicate / Copy Entry">📋</button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="openEditTransaction({{ tx.id }})" title="Edit">✏️</button>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="deleteTransaction({{ tx.id }}, '{{ tx.voucher_no }}')" title="Delete Entry">🗑️</button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="10" style="text-align:center; padding: 2.5rem; color:var(--text-muted);">
+                        No entries recorded for this party.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="7" style="text-align:right; font-weight:bold;">TOTAL:</td>
+                    <td style="text-align:right; font-weight:bold; color:var(--success);">
+                        ₹ {{ "{:,.2f}".format(party_data.total_credit) }}
+                    </td>
+                    <td style="text-align:right; font-weight:bold; color:var(--danger);">
+                        ₹ {{ "{:,.2f}".format(party_data.total_debit) }}
+                    </td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+{% else %}
+<!-- PARTY DIRECTORY LIST -->
+<div class="table-card">
+    <div class="table-card-header">
+        <div class="table-card-title">
+            <span>🤝 All Registered Parties & Vendors ({{ all_parties|length }} Parties)</span>
+        </div>
+        <span style="font-size:0.85rem; color:var(--text-muted);">Click any party to view statement</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>Party / Vendor Name</th>
+                    <th style="text-align:center;">Transactions</th>
+                    <th style="text-align:right;">Total Credit (₹)</th>
+                    <th style="text-align:right;">Total Debit (₹)</th>
+                    <th style="text-align:right;">Net Balance (₹)</th>
+                    <th style="text-align:center;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in all_parties %}
+                <tr>
+                    <td style="color:var(--text-muted); text-align:center;">{{ loop.index }}</td>
+                    <td>
+                        <a href="{{ url_for('party_khata_view', party_name=p.party_name) }}" style="font-weight:700; color:var(--primary);">
+                            {{ p.party_name }}
+                        </a>
+                    </td>
+                    <td style="text-align:center;">
+                        <span class="badge" style="background:#F1F5F9; color:#334155;">{{ p.tx_count }}</span>
+                    </td>
+                    <td style="text-align:right; color:var(--success); font-weight:600;">
+                        ₹ {{ "{:,.2f}".format(p.total_recvd) }}
+                    </td>
+                    <td style="text-align:right; color:var(--danger); font-weight:600;">
+                        ₹ {{ "{:,.2f}".format(p.total_paid) }}
+                    </td>
+                    <td style="text-align:right; font-weight:bold;">
+                        ₹ {{ "{:,.2f}".format(p.total_recvd - p.total_paid) }}
+                    </td>
+                    <td style="text-align:center;">
+                        <a href="{{ url_for('party_khata_view', party_name=p.party_name) }}" class="btn btn-outline btn-sm">
+                            View Khata &rarr;
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" style="text-align:center; padding: 2rem; color:var(--text-muted);">
+                        No parties recorded yet. Click "+ New Entry" above to add your first transaction.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function changeParty(partyName) {
+    if (partyName) {
+        window.location.href = `{{ url_for('party_khata_view') }}?party_name=${encodeURIComponent(partyName)}`;
+    } else {
+        window.location.href = `{{ url_for('party_khata_view') }}`;
+    }
+}
+
+function openNewEntryForParty(partyName) {
+    document.getElementById('btnNewTransaction').click();
+    setTimeout(() => {
+        const partyInput = document.getElementById('partyNameInput');
+        if (partyInput) partyInput.value = partyName;
+    }, 150);
+}
+
+function sharePartyKhataWhatsApp() {
+    {% if party_data %}
+    const party = "{{ party_data.party_name }}";
+    const totalCredit = "{{ '{:,.2f}'.format(party_data.total_credit) }}";
+    const totalDebit = "{{ '{:,.2f}'.format(party_data.total_debit) }}";
+    const netBal = "{{ '{:,.2f}'.format(party_data.net_balance) }}";
+    const count = "{{ party_data.transactions|length }}";
+
+    let text = `*M/S SANDIP KUMAR — PARTY STATEMENT*\n`;
+    text += `👤 *Party / Vendor:* ${party}\n`;
+    text += `--------------------------------\n`;
+    text += `📈 *Total Received (Credit):* Rs. ${totalCredit}\n`;
+    text += `📉 *Total Paid (Debit):* Rs. ${totalDebit}\n`;
+    text += `💼 *Net Balance:* Rs. ${netBal}\n`;
+    text += `📝 *Total Entries:* ${count}\n`;
+    text += `--------------------------------\n`;
+    text += `_M/S Sandip Kumar - JJM Bihar Contractor Portal_`;
+
+    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+    window.open(whatsappUrl, '_blank');
+    {% endif %}
+}
+</script>
+{% endblock %}

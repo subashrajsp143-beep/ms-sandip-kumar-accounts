@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Site-Wise Ledger (21 Sites) — M/S Sandip Kumar{% endblock %}
+{% block page_title %}Site-Wise Detailed Ledger{% endblock %}
+{% block page_subtitle %}Dedicated individual statement of account for each of the 21 JJM Bihar project sites{% endblock %}
+
+{% block content %}
+<!-- SITE SELECTOR & ACTIONS -->
+<div class="filter-card">
+    <div class="filter-group">
+        <span class="form-label-inline" style="font-size:0.9rem; font-weight:700; color:var(--primary);">Select JJM Project Site:</span>
+        <select id="siteLedgerSelect" class="form-control" style="font-size:0.95rem; font-weight:600; min-width:320px;" onchange="changeSiteLedger(this.value)">
+            {% for s in all_sites %}
+                <option value="{{ s.id }}" {% if selected_site_id|string == s.id|string %}selected{% endif %}>
+                    {{ s.code }} — {{ s.name }} ({{ s.district }})
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+        <button type="button" class="btn btn-outline" onclick="openSiteModal()">
+            <span>🏗️ + Add New Site</span>
+        </button>
+        <button type="button" class="btn btn-primary" onclick="openNewEntryForSite({{ selected_site_id }})">
+            <span>+ Add Entry for this Site</span>
+        </button>
+        <button type="button" class="btn btn-outline" onclick="triggerPrint()">
+            <span>🖨️ Print Statement</span>
+        </button>
+        <a href="{{ url_for('export_site_ledger_view', site_id=selected_site_id) }}" class="btn btn-outline" title="Download Excel Statement">
+            <span>📥 Export Excel (.xlsx)</span>
+        </a>
+    </div>
+</div>
+
+{% if ledger_data %}
+<!-- SITE SUMMARY CARDS -->
+<div class="kpi-grid">
+    <!-- Opening Balance -->
+    <div class="kpi-card" style="border-top: 4px solid #64748B;">
+        <div class="kpi-header">
+            <span class="kpi-title">Opening Balance</span>
+            <div class="kpi-icon">⏳</div>
+        </div>
+        <div class="kpi-value">₹ {{ "{:,.2f}".format(ledger_data.opening_balance) }}</div>
+        <div class="kpi-subtext">Carried forward before statement period</div>
+    </div>
+
+    <!-- Total Inflow / Credit -->
+    <div class="kpi-card card-credit">
+        <div class="kpi-header">
+            <span class="kpi-title">Total Credit (Inflow)</span>
+            <div class="kpi-icon">📈</div>
+        </div>
+        <div class="kpi-value">₹ {{ "{:,.2f}".format(ledger_data.total_credit) }}</div>
+        <div class="kpi-subtext">Department RA Bills received for this site</div>
+    </div>
+
+    <!-- Total Outflow / Debit -->
+    <div class="kpi-card card-debit">
+        <div class="kpi-header">
+            <span class="kpi-title">Total Debit (Site Expenses)</span>
+            <div class="kpi-icon">📉</div>
+        </div>
+        <div class="kpi-value">₹ {{ "{:,.2f}".format(ledger_data.total_debit) }}</div>
+        <div class="kpi-subtext">Material, labor, fuel & petty cash spent on site</div>
+    </div>
+
+    <!-- Running / Closing Balance -->
+    <div class="kpi-card card-net">
+        <div class="kpi-header">
+            <span class="kpi-title">Net / Closing Balance</span>
+            <div class="kpi-icon">💼</div>
+        </div>
+        <div class="kpi-value" style="color: {% if ledger_data.closing_balance >= 0 %}var(--success){% else %}var(--danger){% endif %};">
+            ₹ {{ "{:,.2f}".format(ledger_data.closing_balance) }}
+        </div>
+        <div class="kpi-subtext">Site Profit / Inflow minus Outflow reserve</div>
+    </div>
+</div>
+
+<!-- SITE LEDGER TABLE -->
+<div class="table-card">
+    <div class="table-card-header">
+        <div class="table-card-title">
+            <span>🏗️ {{ ledger_data.site.code }} — {{ ledger_data.site.name }} ({{ ledger_data.site.district }} District)</span>
+        </div>
+        <span style="font-size:0.8rem; color:var(--text-muted); font-style:italic;">
+            {{ ledger_data.site.description }}
+        </span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>Date</th>
+                    <th>Voucher No</th>
+                    <th>Category / Head</th>
+                    <th>Party & Description</th>
+                    <th>Ref / UTR</th>
+                    <th>Mode</th>
+                    <th style="text-align:right;">Credit (₹)</th>
+                    <th style="text-align:right;">Debit (₹)</th>
+                    <th style="text-align:right;">Running Bal (₹)</th>
+                    <th style="text-align:center;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Opening Balance Row -->
+                <tr style="background-color: #F8FAFC; font-weight:600;">
+                    <td style="text-align:center;">—</td>
+                    <td>—</td>
+                    <td><span class="badge" style="background:#E2E8F0; color:#475569;">OP-BAL</span></td>
+                    <td colspan="4" style="color:#64748B;">Opening Balance Brought Forward</td>
+                    <td style="text-align:right;">0.00</td>
+                    <td style="text-align:right;">0.00</td>
+                    <td style="text-align:right; font-weight:bold;">₹ {{ "{:,.2f}".format(ledger_data.opening_balance) }}</td>
+                    <td></td>
+                </tr>
+
+                {% for tx in ledger_data.transactions %}
+                <tr>
+                    <td style="color:var(--text-muted); text-align:center;">{{ loop.index }}</td>
+                    <td>{{ tx.tx_date }}</td>
+                    <td>
+                        <a href="{{ url_for('voucher_view', tx_id=tx.id) }}" style="font-weight:700; color:var(--primary);" title="Print Voucher">
+                            {{ tx.voucher_no }} 🖨️
+                        </a>
+                    </td>
+                    <td>{{ tx.category }}</td>
+                    <td>
+                        <strong>{{ tx.party_name }}</strong>
+                        {% if tx.narration %}
+                        <div style="font-size:0.75rem; color:var(--text-muted);">{{ tx.narration }}</div>
+                        {% endif %}
+                    </td>
+                    <td>{{ tx.reference_no or '—' }}</td>
+                    <td><span class="badge badge-mode">{{ tx.payment_mode }}</span></td>
+                    <td style="text-align:right;">
+                        {% if tx.credit_amt > 0 %}
+                        <span class="amount-credit">+ ₹ {{ "{:,.2f}".format(tx.credit_amt) }}</span>
+                        {% else %}
+                        —
+                        {% endif %}
+                    </td>
+                    <td style="text-align:right;">
+                        {% if tx.debit_amt > 0 %}
+                        <span class="amount-debit">- ₹ {{ "{:,.2f}".format(tx.debit_amt) }}</span>
+                        {% else %}
+                        —
+                        {% endif %}
+                    </td>
+                    <td style="text-align:right; font-weight:bold; color: {% if tx.running_balance >= 0 %}var(--success){% else %}var(--danger){% endif %};">
+                        ₹ {{ "{:,.2f}".format(tx.running_balance) }}
+                    </td>
+                    <td style="text-align:center; white-space:nowrap;">
+                        <a href="{{ url_for('voucher_view', tx_id=tx.id) }}" class="btn btn-outline btn-sm" title="Print Voucher">🖨️</a>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="duplicateTransaction({{ tx.id }})" title="Duplicate / Copy Entry">📋</button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="openEditTransaction({{ tx.id }})" title="Edit">✏️</button>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="deleteTransaction({{ tx.id }}, '{{ tx.voucher_no }}')" title="Delete Entry">🗑️</button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="11" style="text-align:center; padding: 2.5rem; color:var(--text-muted);">
+                        No transactions recorded for this site yet. Click "+ Add Entry for this Site" to record one.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="7" style="text-align:right; font-weight:bold;">SITE TOTAL & CLOSING BALANCE:</td>
+                    <td style="text-align:right; font-weight:bold; color:var(--success);">
+                        ₹ {{ "{:,.2f}".format(ledger_data.total_credit) }}
+                    </td>
+                    <td style="text-align:right; font-weight:bold; color:var(--danger);">
+                        ₹ {{ "{:,.2f}".format(ledger_data.total_debit) }}
+                    </td>
+                    <td style="text-align:right; font-weight:bold; color:var(--primary); font-size:1rem;">
+                        ₹ {{ "{:,.2f}".format(ledger_data.closing_balance) }}
+                    </td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function changeSiteLedger(siteId) {
+    window.location.href = `{{ url_for('site_ledger_view') }}?site_id=${siteId}`;
+}
+
+function openNewEntryForSite(siteId) {
+    document.getElementById('btnNewTransaction').click();
+    setTimeout(() => {
+        const siteSelect = document.getElementById('siteSelect');
+        if (siteSelect) siteSelect.value = siteId;
+    }, 150);
+}
+</script>
+{% endblock %}
