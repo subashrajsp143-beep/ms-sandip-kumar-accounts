@@ -48,9 +48,6 @@ def allowed_file(filename):
 login_required = lambda f: f
 owner_required = lambda f: f
 
-# Session lifetime (stays logged in for 30 days)
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
-
 # Context processor: Available everywhere with global data
 @app.context_processor
 def inject_global_data():
@@ -97,7 +94,7 @@ def login():
         
         user = models.authenticate_user(username, password)
         if user:
-            session.permanent = True
+            session.permanent = False  # Session-only cookie (cleared when browser closes)
             session['user_id'] = user['id']
             session['username'] = user['username']
             session['full_name'] = user['full_name']
