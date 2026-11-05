@@ -27,7 +27,7 @@ class AccountsAppTestCase(unittest.TestCase):
         
         login_page = self.client.get('/login')
         self.assertEqual(login_page.status_code, 200)
-        self.assertIn(b'M/S SANDIP KUMAR', login_page.data)
+        self.assertIn(b'MS SANDIP KUMAR', login_page.data)
         self.assertIn(b'123456', login_page.data)
         print("PASS: Unauthenticated redirect to /login verified!")
 
@@ -137,6 +137,22 @@ class AccountsAppTestCase(unittest.TestCase):
         data = json.loads(res.data)
         self.assertTrue(data['success'])
         print("PASS: Dynamic category creation verified!")
+
+    def test_06_firm_settings_update(self):
+        """Verify updating firm name and details reflects in settings."""
+        self.login_client()
+        res = self.client.post('/api/firm-settings/update', data=dict(
+            firm_name='MS SANDIP KUMAR',
+            firm_subtitle='Jal Jeevan Mission, Bihar Contractor',
+            logo_initials='SK'
+        ))
+        self.assertEqual(res.status_code, 200)
+        data = json.loads(res.data)
+        self.assertTrue(data['success'])
+        
+        settings = models.get_firm_settings()
+        self.assertEqual(settings['firm_name'], 'MS SANDIP KUMAR')
+        print("PASS: Firm settings update verified!")
 
 if __name__ == '__main__':
     unittest.main()

@@ -11,6 +11,13 @@ ACCENT_AMBER = "D97706"
 GRAY_LIGHT = "F3F4F6"
 BORDER_GRAY = "D1D5DB"
 
+def get_current_firm_name():
+    try:
+        import models
+        return models.get_firm_settings().get('firm_name', 'MS SANDIP KUMAR')
+    except Exception:
+        return 'MS SANDIP KUMAR'
+
 def apply_header_style(cell, text, bg_color=PINE_DARK, text_color="FFFFFF", font_size=11, bold=True):
     cell.value = text
     cell.font = Font(name="Calibri", size=font_size, bold=bold, color=text_color)
@@ -45,7 +52,7 @@ def export_site_ledger_to_excel(site_ledger_data):
     # 1. Main Title
     ws.merge_cells("A1:J1")
     title_cell = ws["A1"]
-    title_cell.value = "M/S SANDIP KUMAR — JAL JEEVAN MISSION BIHAR"
+    title_cell.value = f"{get_current_firm_name()} — JAL JEEVAN MISSION BIHAR"
     title_cell.font = Font(name="Calibri", size=15, bold=True, color="FFFFFF")
     title_cell.fill = PatternFill(start_color=PINE_DARK, end_color=PINE_DARK, fill_type="solid")
     title_cell.alignment = Alignment(horizontal="center", vertical="center")
@@ -178,7 +185,7 @@ def export_party_ledger_to_excel(party_data):
     # Main Title
     ws.merge_cells("A1:I1")
     t = ws["A1"]
-    t.value = "M/S SANDIP KUMAR — VENDOR & PARTY KHATA STATEMENT"
+    t.value = f"{get_current_firm_name()} — VENDOR & PARTY KHATA STATEMENT"
     t.font = Font(name="Calibri", size=14, bold=True, color="FFFFFF")
     t.fill = PatternFill(start_color=PINE_DARK, end_color=PINE_DARK, fill_type="solid")
     t.alignment = Alignment(horizontal="center", vertical="center")
@@ -268,7 +275,7 @@ def export_daybook_to_excel(daybook_data):
     # Main Title
     ws.merge_cells("A1:H1")
     t = ws["A1"]
-    t.value = f"M/S SANDIP KUMAR — DAILY CASH & BANK DAYBOOK ({daybook_data['date']})"
+    t.value = f"{get_current_firm_name()} — DAILY CASH & BANK DAYBOOK ({daybook_data['date']})"
     t.font = Font(name="Calibri", size=13, bold=True, color="FFFFFF")
     t.fill = PatternFill(start_color=PINE_DARK, end_color=PINE_DARK, fill_type="solid")
     t.alignment = Alignment(horizontal="center", vertical="center")

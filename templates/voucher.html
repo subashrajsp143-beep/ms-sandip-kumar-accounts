@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Voucher {{ tx.voucher_no }} — M/S Sandip Kumar{% endblock %}
+{% block title %}Voucher {{ tx.voucher_no }} — {{ firm_name }}{% endblock %}
 {% block page_title %}Official Payment / Receipt Voucher{% endblock %}
 {% block page_subtitle %}Formal printable accounting voucher for site records & audit compliance{% endblock %}
 
@@ -24,10 +24,10 @@
 <div class="voucher-paper">
     <!-- HEADER -->
     <div class="voucher-header-grid">
-        <div class="voucher-logo-badge">SK</div>
+        <div class="voucher-logo-badge">{{ logo_initials }}</div>
         <div class="voucher-firm-details">
-            <div class="voucher-firm-name">M/S SANDIP KUMAR</div>
-            <div class="voucher-firm-sub">GOVERNMENT & JJM BIHAR CONTRACTOR</div>
+            <div class="voucher-firm-name">{{ firm_name }}</div>
+            <div class="voucher-firm-sub">{{ firm_subtitle }}</div>
             <div style="font-size: 0.78rem; color: #4B5563; margin-top: 2px;">
                 Specialized in Rural Piped Water Schemes, Deep Tubewells, Pump Houses & OHT Infrastructure
             </div>
@@ -61,7 +61,7 @@
             </td>
             <td colspan="3" style="font-weight: 600;">
                 {% if tx.tx_type == 'CREDIT' %}
-                <span class="badge" style="background:#EAF5EF; color:#065F46; font-size:0.85rem;">M/S Sandip Kumar — Central Firm Account</span>
+                <span class="badge" style="background:#EAF5EF; color:#065F46; font-size:0.85rem;">{{ firm_name }} — Central Firm Account</span>
                 {% else %}
                 <span class="badge badge-site">{{ tx.site_code }}</span> 
                 {{ tx.site_name }} ({{ tx.site_district }} District)
@@ -153,7 +153,7 @@
     </div>
 
     <div style="margin-top: 3rem; text-align:center; font-size: 0.72rem; color: #9CA3AF; border-top: 1px solid #F1F5F9; padding-top: 0.5rem;">
-        Computer Generated Accounting Voucher — M/S Sandip Kumar Finance System | Timestamp: {{ tx.created_at }}
+        Computer Generated Accounting Voucher — {{ firm_name }} Finance System | Timestamp: {{ tx.created_at }}
     </div>
 </div>
 {% endblock %}

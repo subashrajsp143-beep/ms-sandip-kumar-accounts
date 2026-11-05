@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Party & Vendor Khata — M/S Sandip Kumar{% endblock %}
+{% block title %}Party & Vendor Khata — {{ firm_name }}{% endblock %}
 {% block page_title %}Party / Vendor Khata & Supplier Statement{% endblock %}
 {% block page_subtitle %}Track outstanding balances, payments and invoices by vendor or contractor{% endblock %}
 
@@ -272,7 +272,7 @@ function sharePartyKhataWhatsApp() {
     const netBal = "{{ '{:,.2f}'.format(party_data.net_balance) }}";
     const count = "{{ party_data.transactions|length }}";
 
-    let text = `*M/S SANDIP KUMAR — PARTY STATEMENT*\n`;
+    let text = `*{{ firm_name }} — PARTY STATEMENT*\n`;
     text += `👤 *Party / Vendor:* ${party}\n`;
     text += `--------------------------------\n`;
     text += `📈 *Total Received (Credit):* Rs. ${totalCredit}\n`;
@@ -280,7 +280,7 @@ function sharePartyKhataWhatsApp() {
     text += `💼 *Net Balance:* Rs. ${netBal}\n`;
     text += `📝 *Total Entries:* ${count}\n`;
     text += `--------------------------------\n`;
-    text += `_M/S Sandip Kumar - JJM Bihar Contractor Portal_`;
+    text += `_{{ firm_name }} - JJM Bihar Contractor Portal_`;
 
     const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
     window.open(whatsappUrl, '_blank');

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}M/S Sandip Kumar — Accounts & Finance Portal{% endblock %}</title>
+    <title>{% block title %}{{ firm_name }} — Accounts & Finance Portal{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <!-- Chart.js for executive analytics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -14,10 +14,10 @@
         <!-- SIDEBAR -->
         <aside class="app-sidebar">
             <div class="sidebar-brand">
-                <div class="brand-icon">SK</div>
+                <div class="brand-icon">{{ logo_initials }}</div>
                 <div class="brand-info">
-                    <h1>M/S SANDIP KUMAR</h1>
-                    <span class="brand-badge">JJM Bihar Contractor</span>
+                    <h1>{{ firm_name }}</h1>
+                    <span class="brand-badge">{{ firm_subtitle }}</span>
                 </div>
             </div>
 
@@ -60,15 +60,16 @@
             <div class="sidebar-footer">
                 <div style="display:flex; align-items:center; gap:0.75rem;">
                     <div style="width:36px; height:36px; border-radius:8px; background:linear-gradient(135deg, #D97706, #F59E0B); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.95rem; color:#FFF; box-shadow:0 2px 4px rgba(0,0,0,0.2);">
-                        SK
+                        {{ logo_initials }}
                     </div>
                     <div>
-                        <div style="font-size:0.85rem; font-weight:700; color:#FFFFFF;">M/S Sandip Kumar</div>
-                        <div style="font-size:0.72rem; color:#A7F3D0;">JJM Bihar Contractor</div>
+                        <div style="font-size:0.85rem; font-weight:700; color:#FFFFFF;">{{ firm_name }}</div>
+                        <div style="font-size:0.72rem; color:#A7F3D0;">{{ firm_subtitle }}</div>
                     </div>
                 </div>
-                <div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.72rem; display: flex; justify-content: space-between;">
-                    <a href="javascript:void(0)" onclick="openChangePasswordModal()" style="color: #A7F3D0; text-decoration: none; font-weight: 600;">🔐 पासवर्ड बदलें</a>
+                <div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.72rem; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
+                    <a href="javascript:void(0)" onclick="openEditFirmModal()" style="color: #FCD34D; text-decoration: none; font-weight: 600;" title="फ़र्म का नाम बदलें">🏢 नाम बदलें</a>
+                    <a href="javascript:void(0)" onclick="openChangePasswordModal()" style="color: #A7F3D0; text-decoration: none; font-weight: 600;">🔐 पासवर्ड</a>
                     <a href="{{ url_for('logout') }}" style="color: #F87171; text-decoration: none; font-weight: 600;">🚪 लॉगआउट</a>
                 </div>
             </div>
@@ -392,6 +393,55 @@
         </div>
     </div>
 
+    <!-- UNIVERSAL EDIT FIRM DETAILS MODAL -->
+    <div class="modal-overlay" id="editFirmModal" style="z-index: 1075; display:none;">
+        <div class="modal-container" style="max-width: 480px;">
+            <div class="modal-header" style="background:#163F37; color:#FFFFFF;">
+                <h3 class="modal-title" style="color:#FFFFFF; font-size:1.15rem; display:flex; align-items:center; gap:0.5rem;">
+                    <span>🏢</span>
+                    <span>फ़र्म का नाम व विवरण बदलें (Edit Firm Details)</span>
+                </h3>
+                <button type="button" class="modal-close" onclick="closeEditFirmModal()" style="color:#FFFFFF;">&times;</button>
+            </div>
+            <form id="editFirmForm">
+                <div class="modal-body" style="padding:1.5rem;">
+                    <div id="firmAlertBox" style="display:none; margin-bottom:1rem; padding:0.75rem; border-radius:8px; font-size:0.85rem; font-weight:600;"></div>
+                    
+                    <div class="form-group" style="margin-bottom:1rem;">
+                        <label style="font-weight:700; font-size:0.88rem; color:#163F37; display:block; margin-bottom:0.35rem;">
+                            फ़र्म / कंपनी का नाम (Firm Name) <span style="color:red">*</span>
+                        </label>
+                        <input type="text" id="firmNameInput" name="firm_name" class="form-control" value="{{ firm_name }}" placeholder="जैसे: MS SANDIP KUMAR" required style="width:100%;">
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:1rem;">
+                        <label style="font-weight:700; font-size:0.88rem; color:#163F37; display:block; margin-bottom:0.35rem;">
+                            सब-टाइटल / कार्य विवरण (Subtitle)
+                        </label>
+                        <input type="text" id="firmSubtitleInput" name="firm_subtitle" class="form-control" value="{{ firm_subtitle }}" placeholder="जैसे: Jal Jeevan Mission, Bihar Contractor" style="width:100%;">
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:1rem;">
+                        <label style="font-weight:700; font-size:0.88rem; color:#163F37; display:block; margin-bottom:0.35rem;">
+                            लोगो के अक्षर (Logo Initials)
+                        </label>
+                        <input type="text" id="logoInitialsInput" name="logo_initials" class="form-control" value="{{ logo_initials }}" placeholder="जैसे: SK" maxlength="4" style="width:100%;">
+                    </div>
+
+                    <div style="font-size:0.78rem; color:#64748B; background:#F8FAFC; padding:0.6rem 0.75rem; border-radius:6px; border:1px solid #E2E8F0;">
+                        ℹ️ यहाँ नाम बदलते ही पूरे पोर्टल (हेडर, वाउचर, रिपोर्ट्स और एक्सेल) पर नया नाम लागू हो जाएगा।
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding:1rem 1.5rem; background:#F8FAFC; display:flex; justify-content:flex-end; gap:0.75rem; border-top:1px solid #E2E8F0;">
+                    <button type="button" class="btn btn-outline" onclick="closeEditFirmModal()">रद्द करें (Cancel)</button>
+                    <button type="submit" class="btn btn-primary" id="btnSubmitFirmChange">
+                        <span>💾 सेव करें (Save Changes)</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Main JavaScript -->
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
     <script>
@@ -483,7 +533,69 @@
                     }
                 });
             }
+
+            // Edit Firm Form Handler
+            const firmForm = document.getElementById('editFirmForm');
+            if (firmForm) {
+                firmForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    const alertBox = document.getElementById('firmAlertBox');
+                    const btn = document.getElementById('btnSubmitFirmChange');
+                    
+                    btn.disabled = true;
+                    btn.textContent = '⏳ सेव हो रहा है...';
+                    
+                    try {
+                        const formData = new FormData(firmForm);
+                        const res = await fetch('/api/firm-settings/update', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        const data = await res.json();
+                        
+                        alertBox.style.display = 'block';
+                        if (data.success) {
+                            alertBox.style.background = '#ECFDF5';
+                            alertBox.style.color = '#065F46';
+                            alertBox.style.border = '1px solid #A7F3D0';
+                            alertBox.textContent = '✅ ' + data.message;
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1200);
+                        } else {
+                            alertBox.style.background = '#FEF2F2';
+                            alertBox.style.color = '#991B1B';
+                            alertBox.style.border = '1px solid #FCA5A5';
+                            alertBox.textContent = '⚠️ ' + data.message;
+                            btn.disabled = false;
+                            btn.innerHTML = '<span>💾 सेव करें (Save Changes)</span>';
+                        }
+                    } catch (err) {
+                        alertBox.style.display = 'block';
+                        alertBox.style.background = '#FEF2F2';
+                        alertBox.style.color = '#991B1B';
+                        alertBox.style.border = '1px solid #FCA5A5';
+                        alertBox.textContent = 'सर्वर एरर! कृपया दोबारा कोशिश करें।';
+                        btn.disabled = false;
+                        btn.innerHTML = '<span>💾 सेव करें (Save Changes)</span>';
+                    }
+                });
+            }
         });
+
+        function openEditFirmModal() {
+            const modal = document.getElementById('editFirmModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                const alertBox = document.getElementById('firmAlertBox');
+                if (alertBox) alertBox.style.display = 'none';
+                document.getElementById('firmNameInput').focus();
+            }
+        }
+        function closeEditFirmModal() {
+            const modal = document.getElementById('editFirmModal');
+            if (modal) modal.style.display = 'none';
+        }
     </script>
     {% block extra_scripts %}{% endblock %}
 </body>

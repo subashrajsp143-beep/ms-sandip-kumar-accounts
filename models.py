@@ -90,6 +90,27 @@ def init_db():
         )
     ''')
 
+    # 6. Firm Settings Table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS firm_settings (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL
+        )
+    ''')
+
+    # Pre-seed Firm Settings (Default: MS SANDIP KUMAR)
+    default_settings = [
+        ('firm_name', 'MS SANDIP KUMAR'),
+        ('firm_subtitle', 'Jal Jeevan Mission, Bihar Contractor'),
+        ('logo_initials', 'SK'),
+        ('proprietor_name', 'Sandip Kumar (Proprietor)'),
+        ('phone', '9835180075'),
+        ('address', 'Patna / Siwan, Bihar')
+    ]
+    for k, v in default_settings:
+        cursor.execute('INSERT OR IGNORE INTO firm_settings (key, value) VALUES (?, ?)', (k, v))
+    cursor.execute("UPDATE firm_settings SET value = 'MS SANDIP KUMAR' WHERE key = 'firm_name'")
+
     # Indices for performance
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_tx_date ON transactions(tx_date)')
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_tx_site ON transactions(site_id)')
@@ -729,6 +750,39 @@ def update_user_password(user_id, new_password):
     conn = get_db()
     hashed = generate_password_hash(new_password)
     conn.execute("UPDATE users SET password_hash = ? WHERE id = ?", (hashed, user_id))
+    conn.commit()
+    conn.close()
+    return True
+
+def get_firm_settings():
+    """Fetches dictionary of firm branding and profile settings."""
+    conn = get_db()
+    rows = conn.execute("SELECT key, value FROM firm_settings").fetchall()
+    conn.close()
+    settings = {r['key']: r['value'] for r in rows}
+    if 'firm_name' not in settings:
+        settings['firm_name'] = 'MS SANDIP KUMAR'
+    if 'firm_subtitle' not in settings:
+        settings['firm_subtitle'] = 'Jal Jeevan Mission, Bihar Contractor'
+    if 'logo_initials' not in settings:
+        settings['logo_initials'] = 'SK'
+    return settings
+
+def update_firm_settings(firm_name=None, firm_subtitle=None, logo_initials=None, proprietor_name=None, phone=None, address=None):
+    """Updates one or more firm profile parameters in the database."""
+    conn = get_db()
+    if firm_name:
+        conn.execute("INSERT INTO firm_settings (key, value) VALUES ('firm_name', ?) ON CONFLICT(key) DO UPDATE SET value = ?", (firm_name, firm_name))
+    if firm_subtitle:
+        conn.execute("INSERT INTO firm_settings (key, value) VALUES ('firm_subtitle', ?) ON CONFLICT(key) DO UPDATE SET value = ?", (firm_subtitle, firm_subtitle))
+    if logo_initials:
+        conn.execute("INSERT INTO firm_settings (key, value) VALUES ('logo_initials', ?) ON CONFLICT(key) DO UPDATE SET value = ?", (logo_initials, logo_initials))
+    if proprietor_name:
+        conn.execute("INSERT INTO firm_settings (key, value) VALUES ('proprietor_name', ?) ON CONFLICT(key) DO UPDATE SET value = ?", (proprietor_name, proprietor_name))
+    if phone:
+        conn.execute("INSERT INTO firm_settings (key, value) VALUES ('phone', ?) ON CONFLICT(key) DO UPDATE SET value = ?", (phone, phone))
+    if address:
+        conn.execute("INSERT INTO firm_settings (key, value) VALUES ('address', ?) ON CONFLICT(key) DO UPDATE SET value = ?", (address, address))
     conn.commit()
     conn.close()
     return True

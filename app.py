@@ -54,7 +54,12 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
 # Context processor: Available everywhere with global data
 @app.context_processor
 def inject_global_data():
+    firm_settings = models.get_firm_settings()
     return {
+        'firm_settings': firm_settings,
+        'firm_name': firm_settings.get('firm_name', 'MS SANDIP KUMAR'),
+        'firm_subtitle': firm_settings.get('firm_subtitle', 'Jal Jeevan Mission, Bihar Contractor'),
+        'logo_initials': firm_settings.get('logo_initials', 'SK'),
         'all_sites': models.get_all_sites(),
         'all_categories': models.get_all_categories(),
         'all_parties': models.get_unique_parties(),
@@ -62,7 +67,7 @@ def inject_global_data():
         'current_user': {
             'id': session.get('user_id'),
             'username': session.get('username', 'sandip'),
-            'full_name': session.get('full_name', 'M/S Sandip Kumar'),
+            'full_name': session.get('full_name', firm_settings.get('firm_name', 'MS Sandip Kumar')),
             'role': session.get('role', 'OWNER')
         }
     }
@@ -166,6 +171,36 @@ def api_change_password():
     return jsonify({
         'success': True,
         'message': 'पासवर्ड सफलतापूर्वक बदल दिया गया है! अगली बार लॉगिन के लिए नया पासवर्ड याद रखें।'
+    })
+
+@app.route('/api/firm-settings/update', methods=['POST'])
+def api_update_firm_settings():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'सत्र समाप्त हो गया है। कृपया दोबारा लॉगिन करें।'}), 401
+        
+    firm_name = request.form.get('firm_name', '').strip()
+    firm_subtitle = request.form.get('firm_subtitle', '').strip()
+    logo_initials = request.form.get('logo_initials', '').strip()
+    
+    if not firm_name:
+        return jsonify({'success': False, 'message': 'फ़र्म का नाम खाली नहीं हो सकता!'}), 400
+        
+    models.update_firm_settings(
+        firm_name=firm_name,
+        firm_subtitle=firm_subtitle,
+        logo_initials=logo_initials
+    )
+    models.log_activity(
+        session.get('user_id', 1),
+        session.get('username', 'sandip'),
+        'UPDATE_FIRM_SETTINGS',
+        f'Firm details updated to: {firm_name}',
+        request.remote_addr
+    )
+    return jsonify({
+        'success': True,
+        'message': 'फ़र्म का नाम और विवरण सफलतापूर्वक अपडेट कर दिया गया है!',
+        'firm_name': firm_name
     })
 
 @app.route('/reset-data', methods=['POST'])

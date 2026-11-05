@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Daily Daybook (Cashflow) — M/S Sandip Kumar{% endblock %}
+{% block title %}Daily Daybook (Cashflow) — {{ firm_name }}{% endblock %}
 {% block page_title %}Daily Daybook & Cashflow{% endblock %}
 {% block page_subtitle %}Comprehensive daily summary of inflows, outflows, cash & bank transactions{% endblock %}
 
@@ -178,7 +178,7 @@ function shareDaybookWhatsApp() {
     const netChange = "{{ '{:,.2f}'.format(daybook.net_day_change) }}";
     const count = "{{ daybook.transactions|length }}";
 
-    let text = `*M/S SANDIP KUMAR — DAILY HISAB*\n`;
+    let text = `*{{ firm_name }} — DAILY HISAB*\n`;
     text += `📅 *Date:* ${date}\n`;
     text += `--------------------------------\n`;
     text += `📈 *Total Inflow (Credit):* Rs. ${totalCredit}\n`;
@@ -186,7 +186,7 @@ function shareDaybookWhatsApp() {
     text += `💼 *Net Cashflow:* Rs. ${netChange}\n`;
     text += `📝 *Total Entries:* ${count}\n`;
     text += `--------------------------------\n`;
-    text += `_M/S Sandip Kumar - JJM Bihar Contractor Portal_`;
+    text += `_{{ firm_name }} - JJM Bihar Contractor Portal_`;
 
     const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
     window.open(whatsappUrl, '_blank');
