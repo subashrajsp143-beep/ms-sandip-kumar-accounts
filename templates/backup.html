@@ -39,6 +39,20 @@
 
 <!-- BACKUP & RESTORE UTILITIES -->
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+    <!-- Real-Time Cloud Sync (GitHub & OneDrive) -->
+    <div class="table-card" style="padding: 1.5rem; border-color: #93C5FD; background: #F0F9FF;">
+        <div class="table-card-title" style="margin-bottom: 0.75rem; color: #1E40AF;">
+            <span>☁️ Real-Time Cloud Backup (GitHub & OneDrive)</span>
+        </div>
+        <p style="font-size: 0.85rem; color: #1E3A8A; margin-bottom: 1.25rem; line-height: 1.45;">
+            Instantly sync your entire database, transaction history, and code to <strong>GitHub Cloud</strong> and your <strong>Microsoft OneDrive Cloud</strong> folder.
+        </p>
+        <button type="button" class="btn btn-primary" id="btnSyncCloud" onclick="triggerCloudBackup()" style="width: 100%; background: #2563EB;">
+            <span>☁️ Sync to Cloud Now</span>
+        </button>
+        <div id="cloudSyncStatus" style="font-size:0.78rem; margin-top:10px; display:none; line-height:1.4;"></div>
+    </div>
+
     <!-- 1-Click SQLite DB Download -->
     <div class="table-card" style="padding: 1.5rem;">
         <div class="table-card-title" style="margin-bottom: 0.75rem;">
@@ -173,4 +187,38 @@
         </table>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function triggerCloudBackup() {
+    const btn = document.getElementById('btnSyncCloud');
+    const statusDiv = document.getElementById('cloudSyncStatus');
+    btn.disabled = true;
+    btn.textContent = '⏳ Syncing to Cloud... (Please wait)';
+    statusDiv.style.display = 'block';
+    statusDiv.style.color = '#1E40AF';
+    statusDiv.textContent = 'Uploading database to Microsoft OneDrive and GitHub Cloud...';
+
+    fetch('/api/cloud-backup', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.textContent = '☁️ Sync to Cloud Now';
+            if (data.success) {
+                statusDiv.style.color = '#059669';
+                statusDiv.innerHTML = `✅ <strong>Cloud Backup Succeeded!</strong><br>• Synced to Microsoft OneDrive<br>• Snapshot zip on Desktop<br>• <a href="https://github.com/subashrajsp143-beep/ms-sandip-kumar-accounts" target="_blank" style="text-decoration:underline; font-weight:bold; color:#1E40AF;">View on GitHub Cloud &rarr;</a>`;
+            } else {
+                statusDiv.style.color = '#DC2626';
+                statusDiv.textContent = '❌ Cloud sync failed: ' + (data.message || 'Unknown error');
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.textContent = '☁️ Sync to Cloud Now';
+            statusDiv.style.color = '#DC2626';
+            statusDiv.textContent = '❌ Network Error: ' + err.message;
+        });
+}
+</script>
 {% endblock %}

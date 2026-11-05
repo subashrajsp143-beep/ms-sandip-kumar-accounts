@@ -372,6 +372,27 @@ def api_create_category():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
+@app.route('/api/cloud-backup', methods=['POST'])
+@login_required
+def api_cloud_backup():
+    try:
+        import cloud_backup
+        result = cloud_backup.run_cloud_backup()
+        models.log_activity(
+            session.get('user_id', 1),
+            'sandip',
+            'CLOUD_BACKUP',
+            "Triggered cloud backup to GitHub and OneDrive",
+            request.remote_addr
+        )
+        return jsonify({
+            'success': True,
+            'message': 'Cloud Backup successful! Synced to GitHub & OneDrive.',
+            'details': result
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 @app.route('/api/next_voucher')
 @login_required
 def api_next_voucher():

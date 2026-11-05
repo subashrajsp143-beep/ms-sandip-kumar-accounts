@@ -135,5 +135,15 @@ class AccountsAppTestCase(unittest.TestCase):
         conn.close()
         print("PASS: Debit & Credit dynamic purpose creation verified successfully!")
 
+    def test_07_cloud_backup_api(self):
+        """Verify the /api/cloud-backup endpoint triggers safely."""
+        rv = self.client.post('/api/cloud-backup')
+        self.assertEqual(rv.status_code, 200)
+        data = json.loads(rv.data)
+        self.assertTrue(data['success'])
+        self.assertTrue(data['details']['onedrive_db'])
+        self.assertTrue(data['details']['zip_archive'])
+        print("PASS: Cloud backup API executed and verified successfully!")
+
 if __name__ == '__main__':
     unittest.main()
