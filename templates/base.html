@@ -67,6 +67,10 @@
                         <div style="font-size:0.72rem; color:#A7F3D0;">JJM Bihar Contractor</div>
                     </div>
                 </div>
+                <div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.72rem; display: flex; justify-content: space-between;">
+                    <a href="javascript:void(0)" onclick="openChangePasswordModal()" style="color: #A7F3D0; text-decoration: none; font-weight: 600;">🔐 पासवर्ड बदलें</a>
+                    <a href="{{ url_for('logout') }}" style="color: #F87171; text-decoration: none; font-weight: 600;">🚪 लॉगआउट</a>
+                </div>
             </div>
         </aside>
 
@@ -83,6 +87,11 @@
                 </div>
 
                 <div class="header-right">
+                    <!-- Change Password Button -->
+                    <button type="button" class="btn btn-outline" id="btnChangePassword" onclick="openChangePasswordModal()" title="पोर्टल पासवर्ड बदलें / Change Password">
+                        <span>🔐 Password</span>
+                    </button>
+
                     <!-- Quick Add Purpose Button -->
                     <button type="button" class="btn btn-outline" id="btnOpenAddCategory" onclick="openCategoryModal()" title="Shortcut: Alt+P">
                         <span>🏷️ + Add Purpose</span>
@@ -99,6 +108,11 @@
                         <span>New Entry</span>
                         <span style="font-size: 0.68rem; background: rgba(255,255,255,0.25); padding: 1px 5px; border-radius: 4px; margin-left: 2px;">[+]</span>
                     </button>
+
+                    <!-- Logout Button -->
+                    <a href="{{ url_for('logout') }}" class="btn btn-outline" style="border-color:#FCA5A5; color:#DC2626; background:#FEF2F2;" title="लॉगआउट / Logout">
+                        <span>🚪 Logout</span>
+                    </a>
                 </div>
             </header>
 
@@ -320,8 +334,157 @@
         </div>
     </div>
 
+    <!-- UNIVERSAL CHANGE PASSWORD MODAL -->
+    <div class="modal-overlay" id="changePasswordModal" style="z-index: 1070; display:none;">
+        <div class="modal-container" style="max-width: 440px;">
+            <div class="modal-header" style="background:#163F37; color:#FFFFFF;">
+                <h3 class="modal-title" style="color:#FFFFFF; font-size:1.15rem; display:flex; align-items:center; gap:0.5rem;">
+                    <span>🔐</span>
+                    <span>पोर्टल पासवर्ड बदलें (Change Password)</span>
+                </h3>
+                <button type="button" class="modal-close" onclick="closeChangePasswordModal()" style="color:#FFFFFF;">&times;</button>
+            </div>
+            <form id="changePasswordForm">
+                <div class="modal-body" style="padding:1.5rem;">
+                    <div id="pwAlertBox" style="display:none; margin-bottom:1rem; padding:0.75rem; border-radius:8px; font-size:0.85rem; font-weight:600;"></div>
+                    
+                    <div class="form-group" style="margin-bottom:1rem;">
+                        <label style="font-weight:700; font-size:0.88rem; color:#163F37; display:block; margin-bottom:0.35rem;">
+                            वर्तमान (पुराना) पासवर्ड <span style="color:red">*</span>
+                        </label>
+                        <div style="position:relative;">
+                            <input type="password" id="oldPasswordInput" name="old_password" class="form-control" placeholder="मौजूदा पासवर्ड दर्ज करें (डिफ़ॉल्ट: 123456)" required style="width:100%; padding-right:40px;">
+                            <button type="button" onclick="togglePasswordVisibility('oldPasswordInput', this)" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:1rem; color:#64748B;">👁️</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:1rem;">
+                        <label style="font-weight:700; font-size:0.88rem; color:#163F37; display:block; margin-bottom:0.35rem;">
+                            नया पासवर्ड <span style="color:red">*</span>
+                        </label>
+                        <div style="position:relative;">
+                            <input type="password" id="newPasswordInput" name="new_password" class="form-control" placeholder="नया पासवर्ड (कम से कम 4 अक्षर)" required minlength="4" style="width:100%; padding-right:40px;">
+                            <button type="button" onclick="togglePasswordVisibility('newPasswordInput', this)" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:1rem; color:#64748B;">👁️</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom:1rem;">
+                        <label style="font-weight:700; font-size:0.88rem; color:#163F37; display:block; margin-bottom:0.35rem;">
+                            नया पासवर्ड दोबारा दर्ज करें (Confirm) <span style="color:red">*</span>
+                        </label>
+                        <div style="position:relative;">
+                            <input type="password" id="confirmPasswordInput" name="confirm_password" class="form-control" placeholder="वही पासवर्ड दोबारा लिखें" required minlength="4" style="width:100%; padding-right:40px;">
+                            <button type="button" onclick="togglePasswordVisibility('confirmPasswordInput', this)" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:1rem; color:#64748B;">👁️</button>
+                        </div>
+                    </div>
+
+                    <div style="font-size:0.78rem; color:#64748B; background:#F8FAFC; padding:0.6rem 0.75rem; border-radius:6px; border:1px solid #E2E8F0;">
+                        ℹ️ पासवर्ड बदलते ही अगली बार लॉगिन करते समय नया पासवर्ड दर्ज करना होगा।
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding:1rem 1.5rem; background:#F8FAFC; display:flex; justify-content:flex-end; gap:0.75rem; border-top:1px solid #E2E8F0;">
+                    <button type="button" class="btn btn-outline" onclick="closeChangePasswordModal()">रद्द करें (Cancel)</button>
+                    <button type="submit" class="btn btn-primary" id="btnSubmitPasswordChange">
+                        <span>💾 नया पासवर्ड सेव करें</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Main JavaScript -->
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script>
+        function openChangePasswordModal() {
+            const modal = document.getElementById('changePasswordModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                document.getElementById('oldPasswordInput').value = '';
+                document.getElementById('newPasswordInput').value = '';
+                document.getElementById('confirmPasswordInput').value = '';
+                const alertBox = document.getElementById('pwAlertBox');
+                if (alertBox) alertBox.style.display = 'none';
+                document.getElementById('oldPasswordInput').focus();
+            }
+        }
+        function closeChangePasswordModal() {
+            const modal = document.getElementById('changePasswordModal');
+            if (modal) modal.style.display = 'none';
+        }
+        function togglePasswordVisibility(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                btn.textContent = '👁️';
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            const pwForm = document.getElementById('changePasswordForm');
+            if (pwForm) {
+                pwForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    const alertBox = document.getElementById('pwAlertBox');
+                    const btn = document.getElementById('btnSubmitPasswordChange');
+                    
+                    const oldPass = document.getElementById('oldPasswordInput').value.trim();
+                    const newPass = document.getElementById('newPasswordInput').value.trim();
+                    const confirmPass = document.getElementById('confirmPasswordInput').value.trim();
+                    
+                    if (newPass !== confirmPass) {
+                        alertBox.style.display = 'block';
+                        alertBox.style.background = '#FEF2F2';
+                        alertBox.style.color = '#991B1B';
+                        alertBox.style.border = '1px solid #FCA5A5';
+                        alertBox.textContent = '⚠️ नया पासवर्ड और कन्फर्म पासवर्ड मैच नहीं कर रहे हैं!';
+                        return;
+                    }
+                    
+                    btn.disabled = true;
+                    btn.textContent = '⏳ सेव हो रहा है...';
+                    
+                    try {
+                        const formData = new FormData(pwForm);
+                        const res = await fetch('/api/change-password', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        const data = await res.json();
+                        
+                        alertBox.style.display = 'block';
+                        if (data.success) {
+                            alertBox.style.background = '#ECFDF5';
+                            alertBox.style.color = '#065F46';
+                            alertBox.style.border = '1px solid #A7F3D0';
+                            alertBox.textContent = '✅ ' + data.message;
+                            setTimeout(() => {
+                                closeChangePasswordModal();
+                                btn.disabled = false;
+                                btn.innerHTML = '<span>💾 नया पासवर्ड सेव करें</span>';
+                            }, 1600);
+                        } else {
+                            alertBox.style.background = '#FEF2F2';
+                            alertBox.style.color = '#991B1B';
+                            alertBox.style.border = '1px solid #FCA5A5';
+                            alertBox.textContent = '⚠️ ' + data.message;
+                            btn.disabled = false;
+                            btn.innerHTML = '<span>💾 नया पासवर्ड सेव करें</span>';
+                        }
+                    } catch (err) {
+                        alertBox.style.display = 'block';
+                        alertBox.style.background = '#FEF2F2';
+                        alertBox.style.color = '#991B1B';
+                        alertBox.style.border = '1px solid #FCA5A5';
+                        alertBox.textContent = 'सर्वर एरर! कृपया दोबारा कोशिश करें।';
+                        btn.disabled = false;
+                        btn.innerHTML = '<span>💾 नया पासवर्ड सेव करें</span>';
+                    }
+                });
+            }
+        });
+    </script>
     {% block extra_scripts %}{% endblock %}
 </body>
 </html>

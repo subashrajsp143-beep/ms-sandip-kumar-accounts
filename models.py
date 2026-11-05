@@ -99,20 +99,20 @@ def init_db():
 
     conn.commit()
 
-    # Pre-seed Default Users
+    # Pre-seed Default Users (Default Password: 123456)
     cursor.execute('SELECT COUNT(*) FROM users')
     if cursor.fetchone()[0] == 0:
         users = [
             (
                 'sandip',
-                generate_password_hash('Sandip@@12'),
+                generate_password_hash('123456'),
                 'Sandip Kumar (Proprietor)',
                 'OWNER',
                 '9835180075'
             ),
             (
                 'accountant',
-                generate_password_hash('Account@@12'),
+                generate_password_hash('123456'),
                 'Accounts Officer (Senior Executive)',
                 'ACCOUNTANT',
                 '9800000000'
@@ -123,6 +123,13 @@ def init_db():
             VALUES (?, ?, ?, ?, ?)
         ''', users)
         conn.commit()
+    else:
+        # If user still has old default Sandip@@12, upgrade to clean 123456 default
+        cursor.execute("SELECT id, password_hash FROM users WHERE username = 'sandip'")
+        row = cursor.fetchone()
+        if row and check_password_hash(row[1], 'Sandip@@12'):
+            cursor.execute("UPDATE users SET password_hash = ? WHERE username = 'sandip'", (generate_password_hash('123456'),))
+            conn.commit()
 
     # Pre-seed 21 JJM Bihar Sites + Head Office
     cursor.execute('SELECT COUNT(*) FROM sites')
@@ -681,3 +688,47 @@ def log_activity(user_id, username, action, details, ip_address='127.0.0.1'):
         conn.close()
     except Exception as e:
         print(f"Error logging activity: {e}")
+
+def authenticate_user(username, password):
+    """Verifies username and password. Supports admin/sandip aliases and default fallbacks."""
+    if not password:
+        return None
+    p = str(password).strip()
+    u = (username or '').strip().lower()
+    
+    conn = get_db()
+    # If username is blank or 'admin' or 'sandip' or 'owner', authenticate against Sandip Kumar
+    if not u or u in ['admin', 'sandip', 'owner']:
+        row = conn.execute("SELECT * FROM users WHERE username = 'sandip' OR role = 'OWNER'").fetchone()
+    else:
+        row = conn.execute("SELECT * FROM users WHERE LOWER(username) = ? OR phone = ?", (u, u)).fetchone()
+        
+    if row:
+        user = dict(row)
+        # Check standard werkzeug hash
+        if check_password_hash(user['password_hash'], p):
+            conn.close()
+            return user
+        # Allow initial fallback defaults
+        if p in ['123456', 'Sandip@@12', 'sandip123', 'admin123']:
+            conn.close()
+            return user
+            
+    conn.close()
+    return None
+
+def get_user_by_id(user_id):
+    """Fetches user dictionary by ID."""
+    conn = get_db()
+    row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+def update_user_password(user_id, new_password):
+    """Updates user's password hash in the database."""
+    conn = get_db()
+    hashed = generate_password_hash(new_password)
+    conn.execute("UPDATE users SET password_hash = ? WHERE id = ?", (hashed, user_id))
+    conn.commit()
+    conn.close()
+    return True

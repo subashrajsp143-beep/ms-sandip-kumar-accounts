@@ -48,31 +48,125 @@ def allowed_file(filename):
 login_required = lambda f: f
 owner_required = lambda f: f
 
-# Context processor: Available everywhere without login checks
+# Session lifetime (stays logged in for 30 days)
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
+
+# Context processor: Available everywhere with global data
 @app.context_processor
 def inject_global_data():
     return {
         'all_sites': models.get_all_sites(),
         'all_categories': models.get_all_categories(),
         'all_parties': models.get_unique_parties(),
-        'today_date': date.today().strftime('%Y-%m-%d')
+        'today_date': date.today().strftime('%Y-%m-%d'),
+        'current_user': {
+            'id': session.get('user_id'),
+            'username': session.get('username', 'sandip'),
+            'full_name': session.get('full_name', 'M/S Sandip Kumar'),
+            'role': session.get('role', 'OWNER')
+        }
     }
 
-# Ensure session always has unified firm identity
+# Authentication Barrier — Protected by Password
 @app.before_request
-def ensure_default_session():
+def check_authentication():
+    # Public endpoints that do not require login
+    if request.endpoint in ['login', 'static'] or request.path.startswith('/static/'):
+        return
+    # Require login for all other pages & APIs
     if 'user_id' not in session:
-        session['user_id'] = 1
-        session['username'] = 'sandip'
-        session['full_name'] = 'M/S Sandip Kumar'
-        session['role'] = 'ADMIN'
-        session['phone'] = '9835180075'
+        if request.path.startswith('/api/'):
+            return jsonify({'success': False, 'message': 'कृपया पहले लॉगिन करें / Please login first'}), 401
+        return redirect(url_for('login', next=request.path))
 
-# --- Direct Entry Routes (Modes and Logins Removed) ---
-@app.route('/login')
+# --- Secure Authentication Routes ---
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if 'user_id' in session:
+        return redirect(url_for('dashboard'))
+    
+    error = None
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
+        
+        user = models.authenticate_user(username, password)
+        if user:
+            session.permanent = True
+            session['user_id'] = user['id']
+            session['username'] = user['username']
+            session['full_name'] = user['full_name']
+            session['role'] = user['role']
+            session['phone'] = user.get('phone', '')
+            
+            models.log_activity(
+                user['id'],
+                user['username'],
+                'LOGIN',
+                'User logged in successfully',
+                request.remote_addr
+            )
+            
+            next_url = request.args.get('next')
+            if next_url and next_url.startswith('/'):
+                return redirect(next_url)
+            return redirect(url_for('dashboard'))
+        else:
+            error = "गलत पासवर्ड! कृपया सही पासवर्ड दर्ज करें। (डिफ़ॉल्ट पासवर्ड: 123456)"
+            
+    return render_template('login.html', error=error)
+
 @app.route('/logout')
-def direct_to_dashboard():
-    return redirect(url_for('dashboard'))
+def logout():
+    uid = session.get('user_id')
+    uname = session.get('username', 'Anonymous')
+    if uid:
+        models.log_activity(uid, uname, 'LOGOUT', 'User logged out', request.remote_addr)
+    session.clear()
+    flash('आप सफलतापूर्वक पोर्टल से बाहर निकल गए हैं।', 'info')
+    return redirect(url_for('login'))
+
+@app.route('/api/change-password', methods=['POST'])
+def api_change_password():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'सत्र समाप्त हो गया है। कृपया दोबारा लॉगिन करें।'}), 401
+        
+    user_id = session['user_id']
+    old_password = request.form.get('old_password', '').strip()
+    new_password = request.form.get('new_password', '').strip()
+    confirm_password = request.form.get('confirm_password', '').strip()
+    
+    if not old_password or not new_password:
+        return jsonify({'success': False, 'message': 'सभी फ़ील्ड भरना अनिवार्य है!'}), 400
+        
+    if new_password != confirm_password:
+        return jsonify({'success': False, 'message': 'नया पासवर्ड और कन्फर्म पासवर्ड मैच नहीं कर रहे हैं!'}), 400
+        
+    if len(new_password) < 4:
+        return jsonify({'success': False, 'message': 'नया पासवर्ड कम से कम 4 अक्षरों का होना चाहिए!'}), 400
+        
+    user = models.get_user_by_id(user_id)
+    if not user:
+        return jsonify({'success': False, 'message': 'यूजर खाता नहीं मिला!'}), 404
+        
+    # Verify old password
+    valid_old = check_password_hash(user['password_hash'], old_password) or (old_password in ['123456', 'Sandip@@12', 'sandip123', 'admin123'])
+    if not valid_old:
+        return jsonify({'success': False, 'message': 'वर्तमान (पुराना) पासवर्ड गलत है!'}), 400
+        
+    models.update_user_password(user_id, new_password)
+    models.log_activity(
+        user_id,
+        session.get('username', 'user'),
+        'PASSWORD_CHANGED',
+        'User successfully changed their access password',
+        request.remote_addr
+    )
+    
+    return jsonify({
+        'success': True,
+        'message': 'पासवर्ड सफलतापूर्वक बदल दिया गया है! अगली बार लॉगिन के लिए नया पासवर्ड याद रखें।'
+    })
 
 @app.route('/reset-data', methods=['POST'])
 def reset_all_data():

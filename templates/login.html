@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Access — M/S Sandip Kumar Accounts & Finance</title>
+    <title>Portal Login — M/S Sandip Kumar Accounts & Finance</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
         .login-page {
@@ -13,15 +13,16 @@
             justify-content: center;
             background: radial-gradient(circle at 10% 20%, #163F37 0%, #0B201C 90%);
             padding: 1.5rem;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
         .login-card {
             background: #FFFFFF;
             width: 100%;
-            max-width: 520px;
-            border-radius: var(--radius-xl);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+            max-width: 460px;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
             overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
         }
         .login-header {
             background-color: #163F37;
@@ -31,96 +32,109 @@
             border-bottom: 3px solid #D97706;
         }
         .login-logo {
-            width: 60px;
-            height: 60px;
+            width: 64px;
+            height: 64px;
             margin: 0 auto 1rem;
             border-radius: 14px;
             background: linear-gradient(135deg, #D97706, #F59E0B);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.6rem;
+            font-size: 1.75rem;
             font-weight: 800;
-            box-shadow: 0 4px 12px rgba(217, 119, 6, 0.4);
+            color: #FFFFFF;
+            box-shadow: 0 6px 16px rgba(217, 119, 6, 0.45);
         }
         .login-body {
-            padding: 2.25rem 2rem;
+            padding: 2rem 2.25rem 2.25rem;
         }
-        .profile-entry-card {
+        .form-label {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #163F37;
+            margin-bottom: 0.4rem;
             display: block;
-            background: #FFFFFF;
-            border: 2px solid var(--border-color);
-            border-radius: var(--radius-lg);
-            padding: 1.25rem 1.5rem;
-            margin-bottom: 1.25rem;
-            text-decoration: none;
-            color: var(--text-main);
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .form-input-wrapper {
             position: relative;
-            overflow: hidden;
-            box-shadow: var(--shadow-sm);
+            margin-bottom: 1.25rem;
         }
-        .profile-entry-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        .form-input-field {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+            border: 1.5px solid #CBD5E1;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+            outline: none;
         }
-        .profile-entry-owner {
-            border-color: #D97706;
-            background: linear-gradient(to right, #FFFDF9, #FFFFFF);
-        }
-        .profile-entry-owner:hover {
-            border-color: #B45309;
-            background: #FEF3C7;
-        }
-        .profile-entry-accountant {
+        .form-input-field:focus {
             border-color: #163F37;
-            background: linear-gradient(to right, #F9FBFA, #FFFFFF);
+            box-shadow: 0 0 0 3px rgba(22, 63, 55, 0.15);
         }
-        .profile-entry-accountant:hover {
-            border-color: #0E2B25;
-            background: #EAF5EF;
-        }
-        .profile-card-header {
+        .pw-toggle-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.15rem;
+            color: #64748B;
+            padding: 0;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            margin-bottom: 0.5rem;
+            justify-content: center;
         }
-        .profile-title {
-            font-size: 1.15rem;
-            font-weight: 800;
+        .pw-toggle-btn:hover {
             color: #163F37;
+        }
+        .btn-login-submit {
+            width: 100%;
+            padding: 0.85rem;
+            background: linear-gradient(135deg, #163F37, #0E2B25);
+            color: #FFFFFF;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(22, 63, 55, 0.3);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .btn-login-submit:hover {
+            background: linear-gradient(135deg, #1E4F45, #163F37);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(22, 63, 55, 0.4);
+        }
+        .error-banner {
+            background: #FEF2F2;
+            border: 1px solid #FCA5A5;
+            color: #991B1B;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
-        .profile-desc {
+        .hint-box {
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            padding: 0.85rem 1rem;
             font-size: 0.82rem;
-            color: #4B5563;
-            line-height: 1.4;
-            margin-bottom: 0.75rem;
-        }
-        .profile-btn-indicator {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: #D97706;
-        }
-        .profile-entry-accountant .profile-btn-indicator {
-            color: #059669;
-        }
-        .badge-no-pin {
-            display: inline-block;
-            background: #ECFDF5;
-            color: #065F46;
-            border: 1px solid #A7F3D0;
-            padding: 3px 8px;
-            border-radius: 6px;
-            font-size: 0.72rem;
-            font-weight: 700;
-            text-transform: uppercase;
+            color: #475569;
+            margin-top: 1.5rem;
+            line-height: 1.5;
         }
     </style>
 </head>
@@ -128,65 +142,87 @@
     <div class="login-card">
         <div class="login-header">
             <div class="login-logo">SK</div>
-            <h2 style="font-size: 1.3rem; font-weight: 800; letter-spacing: 0.02em;">M/S SANDIP KUMAR</h2>
-            <div style="font-size: 0.85rem; color: #A7F3D0; font-weight: 600; margin-top: 4px;">
+            <h2 style="font-size: 1.35rem; font-weight: 800; letter-spacing: 0.02em; margin: 0;">M/S SANDIP KUMAR</h2>
+            <div style="font-size: 0.85rem; color: #A7F3D0; font-weight: 600; margin-top: 5px;">
                 JAL JEEVAN MISSION, BIHAR CONTRACTOR
             </div>
             <div style="font-size: 0.75rem; color: rgba(255,255,255,0.7); margin-top: 4px;">
-                Accounts & Finance Management System
+                Accounts & Finance Management Portal
             </div>
         </div>
 
         <div class="login-body">
+            {% if error %}
+                <div class="error-banner">
+                    <span>⚠️</span>
+                    <span>{{ error }}</span>
+                </div>
+            {% endif %}
+
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
-                        <div class="alert-box alert-{{ 'danger' if category == 'error' else category }}" style="margin-bottom: 1.25rem;">
+                        <div class="error-banner" style="background:#EFF6FF; border-color:#BFDBFE; color:#1E40AF;">
+                            <span>ℹ️</span>
                             <span>{{ message }}</span>
                         </div>
                     {% endfor %}
                 {% endif %}
             {% endwith %}
 
-            <div style="text-align: center; margin-bottom: 1.5rem;">
-                <span class="badge-no-pin">⚡ Direct 1-Click Access (No Password / PIN Needed)</span>
-                <p style="font-size: 0.88rem; color: #64748B; margin-top: 0.5rem; font-weight: 500;">
-                    Select your profile to enter immediately:
-                </p>
+            <form method="POST" action="{{ url_for('login') }}">
+                <div class="form-input-wrapper">
+                    <label class="form-label" for="username">यूज़रनेम (Username)</label>
+                    <input type="text" id="username" name="username" class="form-input-field" value="admin" placeholder="admin या sandip" required autofocus>
+                </div>
+
+                <div class="form-input-wrapper">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                        <label class="form-label" for="password" style="margin-bottom: 0;">पोर्टल पासवर्ड (Password)</label>
+                        <span style="font-size: 0.75rem; color: #D97706; font-weight: 700;">डिफ़ॉल्ट: 123456</span>
+                    </div>
+                    <div style="position: relative;">
+                        <input type="password" id="password" name="password" class="form-input-field" placeholder="पासवर्ड दर्ज करें" required style="padding-right: 42px;">
+                        <button type="button" class="pw-toggle-btn" onclick="togglePassword()" title="पासवर्ड देखें / छिपाएं" aria-label="Toggle password visibility">
+                            <span id="pwIcon">👁️</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; font-size: 0.85rem; color: #64748B;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" name="remember" checked style="accent-color: #163F37;">
+                        <span>मुझे याद रखें (30 Days Login)</span>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn-login-submit">
+                    <span>🔐</span>
+                    <span>पोर्टल में प्रवेश करें (Login)</span>
+                </button>
+            </form>
+
+            <div class="hint-box">
+                <div style="font-weight: 700; color: #163F37; margin-bottom: 3px; display: flex; align-items: center; gap: 4px;">
+                    <span>💡</span> <span>पासवर्ड सूचना:</span>
+                </div>
+                <div>पहली बार लॉगिन के लिए डिफ़ॉल्ट पासवर्ड <strong>123456</strong> है। पोर्टल के अंदर जाकर आप ऊपर दिए गए <strong>"🔐 Password"</strong> बटन से अपना नया पासवर्ड सेट कर सकते हैं।</div>
             </div>
-
-            <!-- 1-Click Owner Access -->
-            <a href="{{ url_for('login', role='owner') }}" class="profile-entry-card profile-entry-owner">
-                <div class="profile-card-header">
-                    <span class="profile-title">
-                        👑 Sandip Kumar (Owner)
-                    </span>
-                    <span class="owner-tag">Proprietor Access</span>
-                </div>
-                <div class="profile-desc">
-                    Complete treasury control, cash & bank balance, profit/loss matrix, audit controls, and database backups.
-                </div>
-                <div class="profile-btn-indicator">
-                    <span>Click to Enter as Owner &rarr;</span>
-                </div>
-            </a>
-
-            <!-- 1-Click Accountant Access -->
-            <a href="{{ url_for('login', role='accountant') }}" class="profile-entry-card profile-entry-accountant">
-                <div class="profile-card-header">
-                    <span class="profile-title">
-                        💼 Senior Accountant
-                    </span>
-                    <span class="badge" style="background:#EAF5EF; color:#047857;">Daily Accounts</span>
-                </div>
-                <div class="profile-desc">
-                    Daily Credit & Debit voucher entries, site ledgers for 21 sites, vendor khatas, and 1-click Excel downloads.
-                </div>
-                <div class="profile-btn-indicator">
-                    <span>Click to Enter as Accountant &rarr;</span>
-                </div>
-            </a>
         </div>
     </div>
+
+    <script>
+        function togglePassword() {
+            const input = document.getElementById('password');
+            const icon = document.getElementById('pwIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                icon.textContent = '👁️';
+            }
+        }
+    </script>
 </body>
 </html>
