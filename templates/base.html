@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>{% block title %}{{ firm_name }} — Accounts & Finance Portal{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=20261105_mobile3">
     <!-- Chart.js for executive analytics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     {% block extra_head %}{% endblock %}
@@ -69,7 +69,7 @@
                 </div>
                 <div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.72rem; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
                     <a href="javascript:void(0)" onclick="openEditFirmModal()" style="color: #FCD34D; text-decoration: none; font-weight: 600;" title="फ़र्म का नाम बदलें">🏢 नाम बदलें</a>
-                    <a href="javascript:void(0)" onclick="openChangePasswordModal()" style="color: #A7F3D0; text-decoration: none; font-weight: 600;">🔐 पासवर्ड</a>
+                    <a href="{{ url_for('change_password_view') }}" style="color: #A7F3D0; text-decoration: none; font-weight: 600;">🔐 पासवर्ड बदलें</a>
                     <a href="{{ url_for('logout') }}" style="color: #F87171; text-decoration: none; font-weight: 600;">🚪 लॉगआउट</a>
                 </div>
             </div>
@@ -88,10 +88,10 @@
                 </div>
 
                 <div class="header-right">
-                    <!-- Change Password Button -->
-                    <button type="button" class="btn btn-outline" id="btnChangePassword" onclick="openChangePasswordModal()" title="पोर्टल पासवर्ड बदलें / Change Password">
+                    <!-- Change Password Direct Link -->
+                    <a href="{{ url_for('change_password_view') }}" class="btn btn-outline" id="btnChangePassword" title="पोर्टल पासवर्ड बदलें / Change Password">
                         <span>🔐 Password</span>
-                    </button>
+                    </a>
 
                     <!-- Quick Add Purpose Button -->
                     <button type="button" class="btn btn-outline" id="btnOpenAddCategory" onclick="openCategoryModal()" title="Shortcut: Alt+P">
@@ -153,10 +153,10 @@
             <span class="m-icon">📅</span>
             <span class="m-label">डेबुक</span>
         </a>
-        <button type="button" class="mobile-nav-item" onclick="openChangePasswordModal()" title="पासवर्ड बदलें">
+        <a href="{{ url_for('change_password_view') }}" class="mobile-nav-item {% if active_page == 'security' %}active{% endif %}" title="पासवर्ड बदलें">
             <span class="m-icon">🔐</span>
             <span class="m-label">पासवर्ड</span>
-        </button>
+        </a>
     </nav>
 
     <!-- UNIVERSAL TRANSACTION ENTRY & EDIT MODAL -->
@@ -369,7 +369,7 @@
                 </h3>
                 <button type="button" class="modal-close" onclick="closeChangePasswordModal()" style="color:#FFFFFF;">&times;</button>
             </div>
-            <form id="changePasswordForm">
+            <form id="changePasswordForm" method="POST" action="{{ url_for('change_password_view') }}">
                 <div class="modal-body" style="padding:1.5rem;">
                     <div id="pwAlertBox" style="display:none; margin-bottom:1rem; padding:0.75rem; border-radius:8px; font-size:0.85rem; font-weight:600;"></div>
                     
@@ -469,8 +469,8 @@
         </div>
     </div>
 
-    <!-- Main JavaScript -->
-    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <!-- Main JavaScript with Cache-Buster -->
+    <script src="{{ url_for('static', filename='js/app.js') }}?v=20261105_mobile3"></script>
     <script>
         function openChangePasswordModal() {
             const modal = document.getElementById('changePasswordModal');

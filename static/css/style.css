@@ -1264,6 +1264,11 @@ select.form-control {
     grid-template-columns: 1fr 1fr !important;
     gap: 0.65rem !important;
   }
+  .kpi-grid .card-net {
+    grid-column: span 2 !important;
+    background: linear-gradient(135deg, #EAF5EF, #FFFFFF) !important;
+    border: 1.5px solid #10B981 !important;
+  }
   .kpi-card {
     padding: 0.85rem !important;
     border-radius: 12px !important;
@@ -1276,6 +1281,62 @@ select.form-control {
   }
   .kpi-subtext {
     display: none !important;
+  }
+
+  /* Full Width Touch Filters on Mobile */
+  .filter-card {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 0.85rem !important;
+    gap: 0.75rem !important;
+  }
+  .filter-group {
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 0.5rem !important;
+  }
+  .filter-group select.form-control,
+  .filter-group .form-control {
+    width: 100% !important;
+    height: 44px !important;
+    box-sizing: border-box !important;
+  }
+  .filter-card > div:last-child {
+    display: flex !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+  }
+  .filter-card > div:last-child a.btn {
+    flex: 1 !important;
+    text-align: center !important;
+    justify-content: center !important;
+    height: 38px !important;
+    font-size: 0.85rem !important;
+  }
+
+  /* Touch-Friendly Transaction Form in Modal */
+  .type-selector-group {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+  .type-btn {
+    width: 100% !important;
+    padding: 0.75rem !important;
+    font-size: 0.9rem !important;
+  }
+  .form-control {
+    height: 44px !important;
+    font-size: 16px !important;
+    border-radius: 8px !important;
+  }
+  .modal-close {
+    font-size: 1.6rem !important;
+    padding: 6px 12px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 
   /* Modals on Mobile: Bottom-sheet feel with easy scrolling */

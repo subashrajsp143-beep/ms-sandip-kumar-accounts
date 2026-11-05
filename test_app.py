@@ -154,5 +154,26 @@ class AccountsAppTestCase(unittest.TestCase):
         self.assertEqual(settings['firm_name'], 'MS SANDIP KUMAR')
         print("PASS: Firm settings update verified!")
 
+    def test_07_full_page_password_change(self):
+        """Verify dedicated /change-password full page GET and POST flow."""
+        self.login_client()
+        # 1. GET page
+        get_rv = self.client.get('/change-password')
+        self.assertEqual(get_rv.status_code, 200)
+        self.assertIn('पोर्टल पासवर्ड बदलें'.encode('utf-8'), get_rv.data)
+        
+        # 2. POST password update
+        post_rv = self.client.post('/change-password', data=dict(
+            old_password='', # empty old password test
+            new_password='phone_new_pass',
+            confirm_password='phone_new_pass'
+        ), follow_redirects=True)
+        self.assertEqual(post_rv.status_code, 200)
+        self.assertIn(b'Master Financial Dashboard', post_rv.data)
+        
+        # Reset back to 123456
+        models.update_user_password(1, '123456')
+        print("PASS: Dedicated /change-password full page flow verified!")
+
 if __name__ == '__main__':
     unittest.main()
