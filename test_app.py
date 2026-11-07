@@ -91,9 +91,19 @@ class AccountsAppTestCase(unittest.TestCase):
         self.assertEqual(rv_new_login.status_code, 200)
         self.assertIn(b'Master Financial Dashboard', rv_new_login.data)
         
+        # 5. CRITICAL SECURITY TEST: Verify old password (123456) is completely REJECTED
+        self.client.get('/logout')
+        rv_old_login = self.client.post('/login', data=dict(
+            username='sandip',
+            password='123456'
+        ), follow_redirects=True)
+        self.assertEqual(rv_old_login.status_code, 200)
+        self.assertIn('गलत पासवर्ड'.encode('utf-8'), rv_old_login.data)
+        self.assertNotIn(b'Master Financial Dashboard', rv_old_login.data)
+        
         # Reset back to 123456 so default tests continue smoothly
         models.update_user_password(1, '123456')
-        print("PASS: In-app password change verified end-to-end!")
+        print("PASS: In-app password change verified end-to-end (old password strictly blocked)!")
 
     def test_04_create_edit_and_delete_transaction(self):
         """Verify authenticated user can perform full transaction lifecycle."""
@@ -171,9 +181,27 @@ class AccountsAppTestCase(unittest.TestCase):
         self.assertEqual(post_rv.status_code, 200)
         self.assertIn(b'Master Financial Dashboard', post_rv.data)
         
+        # 3. Verify old password (123456) is rejected
+        self.client.get('/logout')
+        rv_old_login = self.client.post('/login', data=dict(
+            username='sandip',
+            password='123456'
+        ), follow_redirects=True)
+        self.assertEqual(rv_old_login.status_code, 200)
+        self.assertIn('गलत पासवर्ड'.encode('utf-8'), rv_old_login.data)
+        self.assertNotIn(b'Master Financial Dashboard', rv_old_login.data)
+        
+        # 4. Verify new password works
+        rv_new_login = self.client.post('/login', data=dict(
+            username='sandip',
+            password='phone_new_pass'
+        ), follow_redirects=True)
+        self.assertEqual(rv_new_login.status_code, 200)
+        self.assertIn(b'Master Financial Dashboard', rv_new_login.data)
+        
         # Reset back to 123456
         models.update_user_password(1, '123456')
-        print("PASS: Dedicated /change-password full page flow verified!")
+        print("PASS: Dedicated /change-password full page flow verified (old password blocked)!")
 
 if __name__ == '__main__':
     unittest.main()

@@ -114,7 +114,7 @@ def login():
                 return redirect(next_url)
             return redirect(url_for('dashboard'))
         else:
-            error = "गलत पासवर्ड! कृपया सही पासवर्ड दर्ज करें। (डिफ़ॉल्ट पासवर्ड: 123456)"
+            error = "गलत पासवर्ड! कृपया सही पासवर्ड दर्ज करें। (डिफ़ॉल्ट: 123456 यदि बदला नहीं गया है)"
             
     return render_template('login.html', error=error)
 
@@ -148,9 +148,9 @@ def change_password_view():
         else:
             user = models.get_user_by_id(session['user_id'])
             if old_password and user:
-                valid_old = check_password_hash(user['password_hash'], old_password) or (old_password in ['123456', 'Sandip@@12', 'sandip123', 'admin123', 'admin'])
+                valid_old = check_password_hash(user['password_hash'], old_password)
                 if not valid_old:
-                    error = "पुराना पासवर्ड मैच नहीं हुआ! डिफ़ॉल्ट पासवर्ड 123456 है (या इसे खाली छोड़ दें)।"
+                    error = "पुराना पासवर्ड गलत है! कृपया सही वर्तमान पासवर्ड दर्ज करें (या इसे खाली छोड़ दें)।"
             
             if not error:
                 models.update_user_password(session['user_id'], new_password)
@@ -189,12 +189,11 @@ def api_change_password():
     if not user:
         return jsonify({'success': False, 'message': 'यूजर खाता नहीं मिला!'}), 404
         
-    # Check old password if provided
-    # Accept: correct hash OR 123456/Sandip@@12/admin etc. OR if blank (user is already authenticated in session)
+    # Check old password if provided (strictly verify against stored password_hash)
     if old_password:
-        valid_old = check_password_hash(user['password_hash'], old_password) or (old_password in ['123456', 'Sandip@@12', 'sandip123', 'admin123', 'admin'])
+        valid_old = check_password_hash(user['password_hash'], old_password)
         if not valid_old:
-            return jsonify({'success': False, 'message': 'पुराना पासवर्ड मैच नहीं हुआ! डिफ़ॉल्ट पासवर्ड 123456 है (या इसे खाली छोड़ दें)।'}), 400
+            return jsonify({'success': False, 'message': 'पुराना पासवर्ड गलत है! कृपया सही वर्तमान पासवर्ड दर्ज करें (या इसे खाली छोड़ दें)।'}), 400
             
     models.update_user_password(user_id, new_password)
     models.log_activity(

@@ -730,10 +730,6 @@ def authenticate_user(username, password):
         if check_password_hash(user['password_hash'], p):
             conn.close()
             return user
-        # Allow initial fallback defaults
-        if p in ['123456', 'Sandip@@12', 'sandip123', 'admin123']:
-            conn.close()
-            return user
             
     conn.close()
     return None

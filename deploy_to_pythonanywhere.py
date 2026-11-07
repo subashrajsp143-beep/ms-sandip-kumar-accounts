@@ -102,7 +102,8 @@ def main():
     for root, dirs, files in os.walk(PROJECT_DIR):
         dirs[:] = [d for d in dirs if d not in ['.git', '__pycache__', '.venv']]
         for f in files:
-            if f in ['test_pa_upload.py', 'deploy_to_pythonanywhere.py'] or f.endswith(('.pyc', '.exe')):
+            # Never overwrite live database or temp files during deployment
+            if f in ['test_pa_upload.py', 'deploy_to_pythonanywhere.py', 'sandip_accounts_remote.db'] or f.endswith(('.pyc', '.exe', '.db')):
                 continue
             full = os.path.join(root, f)
             rel = os.path.relpath(full, PROJECT_DIR)
