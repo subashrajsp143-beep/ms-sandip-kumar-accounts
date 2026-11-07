@@ -3,8 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="theme-color" content="#163F37">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>{% block title %}{{ firm_name }} — Accounts & Finance Portal{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=20261105_mobile3">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=20261107_mobile_ultra">
     <!-- Chart.js for executive analytics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     {% block extra_head %}{% endblock %}
@@ -19,6 +23,7 @@
                     <h1>{{ firm_name }}</h1>
                     <span class="brand-badge">{{ firm_subtitle }}</span>
                 </div>
+                <button type="button" class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Close navigation menu">&times;</button>
             </div>
 
             <nav class="sidebar-nav">
@@ -74,6 +79,9 @@
                 </div>
             </div>
         </aside>
+
+        <!-- SIDEBAR MOBILE BACKDROP -->
+        <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
         <!-- MAIN APP CONTENT -->
         <div class="app-main">
@@ -145,7 +153,7 @@
             <span class="m-icon">📑</span>
             <span class="m-label">खाता</span>
         </a>
-        <button type="button" class="mobile-nav-action-btn" id="mBtnNewEntry" onclick="document.getElementById('btnNewTransaction').click()" title="नया वाउचर एंट्री">
+        <button type="button" class="mobile-nav-action-btn" id="mBtnNewEntry" onclick="if(window.openTransactionModal){window.openTransactionModal('create');}else{document.getElementById('btnNewTransaction').click();}" title="नया वाउचर एंट्री">
             <span class="m-action-icon">+</span>
             <span class="m-label">एंट्री</span>
         </button>

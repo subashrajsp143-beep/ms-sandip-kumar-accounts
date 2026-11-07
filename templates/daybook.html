@@ -12,12 +12,12 @@
         <input type="date" id="daybookDateInput" class="form-control" value="{{ selected_date }}" style="font-size:0.95rem; font-weight:600;" onchange="changeDaybookDate(this.value)">
     </div>
 
-    <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+    <div style="display:flex; gap:0.5rem; flex-wrap:wrap; width:100%;">
+        <button type="button" class="btn btn-whatsapp-mobile" onclick="shareDaybookWhatsApp()">
+            <span>📲 Share on WhatsApp</span>
+        </button>
         <button type="button" class="btn btn-outline" onclick="triggerPrint()">
             <span>🖨️ Print Daybook</span>
-        </button>
-        <button type="button" class="btn btn-outline" style="background:#25D366; color:white; border-color:#25D366;" onclick="shareDaybookWhatsApp()">
-            <span>📲 Share on WhatsApp</span>
         </button>
         <a href="{{ url_for('export_daybook_view', date=selected_date) }}" class="btn btn-outline" title="Download Excel Daybook">
             <span>📥 Export Excel (.xlsx)</span>
@@ -71,7 +71,77 @@
         </span>
     </div>
 
-    <div class="table-responsive">
+    <!-- MOBILE VIEW TOGGLE -->
+    <div class="mobile-view-toggle-bar">
+        <button type="button" class="btn-view-toggle active" id="btnViewCards" onclick="setMobileView('cards')">
+            📱 कार्ड्स व्यू (Cards)
+        </button>
+        <button type="button" class="btn-view-toggle" id="btnViewTable" onclick="setMobileView('table')">
+            📊 टेबल व्यू (Table)
+        </button>
+    </div>
+
+    <!-- MOBILE CARDS VIEW -->
+    <div class="mobile-tx-cards-container">
+        {% for tx in daybook.transactions %}
+        <div class="mobile-tx-card {% if tx.tx_type == 'CREDIT' %}tx-card-credit{% else %}tx-card-debit{% endif %}">
+            <div class="m-card-top">
+                <div class="m-card-meta">
+                    <a href="{{ url_for('voucher_view', tx_id=tx.id) }}" class="m-voucher-chip">{{ tx.voucher_no }} 🖨️</a>
+                    <span class="m-date">#{{ loop.index }}</span>
+                </div>
+                <span class="badge {% if tx.tx_type == 'CREDIT' %}badge-credit{% else %}badge-debit{% endif %}">
+                    {{ tx.tx_type }}
+                </span>
+            </div>
+
+            <div class="m-card-body">
+                <div class="m-party-name">{{ tx.party_name }}</div>
+                {% if tx.narration %}
+                <div class="m-narration">{{ tx.narration }}</div>
+                {% endif %}
+            </div>
+
+            <div class="m-card-tags">
+                <span class="badge badge-site">🏗️ {{ tx.site_code }} — {{ tx.site_name }}</span>
+                <span class="badge badge-cat">🏷️ {{ tx.category }}</span>
+                <span class="badge badge-mode">💳 {{ tx.payment_mode }}</span>
+                {% if tx.reference_no %}
+                <span class="badge" style="background:#F1F5F9; color:#475569;"># {{ tx.reference_no }}</span>
+                {% endif %}
+            </div>
+
+            <div class="m-card-footer">
+                <div class="m-card-amount {% if tx.tx_type == 'CREDIT' %}amount-credit{% else %}amount-debit{% endif %}">
+                    {% if tx.tx_type == 'CREDIT' %}+{% else %}-{% endif %} ₹ {{ "{:,.2f}".format(tx.amount) }}
+                </div>
+                <div class="m-card-actions">
+                    <a href="{{ url_for('voucher_view', tx_id=tx.id) }}" class="btn btn-outline btn-sm m-btn-action" title="वाउचर प्रिंट">
+                        🖨️
+                    </a>
+                    <button type="button" class="btn btn-outline btn-sm m-btn-action" onclick="duplicateTransaction({{ tx.id }})" title="कॉपी">
+                        📋
+                    </button>
+                    <button type="button" class="btn btn-outline btn-sm m-btn-action" onclick="openEditTransaction({{ tx.id }})" title="एडिट">
+                        ✏️
+                    </button>
+                    <button type="button" class="btn btn-danger btn-sm m-btn-action" onclick="deleteTransaction({{ tx.id }}, '{{ tx.voucher_no }}')" title="डिलीट">
+                        🗑️
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div style="text-align:center; padding: 2rem 1rem; color:var(--text-muted); background:#F8FAFC; border-radius:12px; border:1px dashed #CBD5E1;">
+            <div style="font-size:2rem; margin-bottom:0.4rem;">📅</div>
+            <div style="font-weight:700; color:var(--primary);">No transactions recorded for {{ selected_date }}</div>
+            <div style="font-size:0.85rem; margin-top:2px;">Tap "+ New Entry" below to record an entry.</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- DESKTOP TABLE VIEW -->
+    <div class="table-responsive desktop-table-view">
         <table class="data-table">
             <thead>
                 <tr>

@@ -9,7 +9,7 @@
 <div class="filter-card">
     <div class="filter-group">
         <span class="form-label-inline" style="font-size:0.9rem; font-weight:700; color:var(--primary);">Select JJM Project Site:</span>
-        <select id="siteLedgerSelect" class="form-control" style="font-size:0.95rem; font-weight:600; min-width:320px;" onchange="changeSiteLedger(this.value)">
+        <select id="siteLedgerSelect" class="form-control" style="font-size:0.95rem; font-weight:600; width:100%; max-width:480px;" onchange="changeSiteLedger(this.value)">
             {% for s in all_sites %}
                 <option value="{{ s.id }}" {% if selected_site_id|string == s.id|string %}selected{% endif %}>
                     {{ s.code }} — {{ s.name }} ({{ s.district }})
@@ -91,7 +91,72 @@
         </span>
     </div>
 
-    <div class="table-responsive">
+    <!-- MOBILE VIEW TOGGLE -->
+    <div class="mobile-view-toggle-bar">
+        <button type="button" class="btn-view-toggle active" id="btnViewCards" onclick="setMobileView('cards')">
+            📱 कार्ड्स व्यू (Cards)
+        </button>
+        <button type="button" class="btn-view-toggle" id="btnViewTable" onclick="setMobileView('table')">
+            📊 टेबल व्यू (Table)
+        </button>
+    </div>
+
+    <!-- MOBILE CARDS VIEW -->
+    <div class="mobile-tx-cards-container">
+        {% for tx in ledger_data.transactions %}
+        <div class="mobile-tx-card {% if tx.tx_type == 'CREDIT' %}tx-card-credit{% else %}tx-card-debit{% endif %}">
+            <div class="m-card-top">
+                <div class="m-card-meta">
+                    <span class="m-date">📅 {{ tx.tx_date }}</span>
+                    <a href="{{ url_for('voucher_view', tx_id=tx.id) }}" class="m-voucher-chip">{{ tx.voucher_no }} 🖨️</a>
+                </div>
+                <span class="badge {% if tx.tx_type == 'CREDIT' %}badge-credit{% else %}badge-debit{% endif %}">
+                    {{ tx.tx_type }}
+                </span>
+            </div>
+
+            <div class="m-card-body">
+                <div class="m-party-name">{{ tx.party_name }}</div>
+                {% if tx.narration %}
+                <div class="m-narration">{{ tx.narration }}</div>
+                {% endif %}
+            </div>
+
+            <div class="m-card-tags">
+                <span class="badge badge-cat">🏷️ {{ tx.category }}</span>
+                <span class="badge badge-mode">💳 {{ tx.payment_mode }}</span>
+                {% if tx.reference_no %}
+                <span class="badge" style="background:#F1F5F9; color:#475569;"># {{ tx.reference_no }}</span>
+                {% endif %}
+            </div>
+
+            <div class="m-card-footer">
+                <div>
+                    <div class="m-card-amount {% if tx.tx_type == 'CREDIT' %}amount-credit{% else %}amount-debit{% endif %}">
+                        {% if tx.tx_type == 'CREDIT' %}+{% else %}-{% endif %} ₹ {{ "{:,.2f}".format(tx.amount) }}
+                    </div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">
+                        Bal: ₹ {{ "{:,.2f}".format(tx.running_balance) }}
+                    </div>
+                </div>
+                <div class="m-card-actions">
+                    <a href="{{ url_for('voucher_view', tx_id=tx.id) }}" class="btn btn-outline btn-sm m-btn-action" title="वाउचर प्रिंट">🖨️</a>
+                    <button type="button" class="btn btn-outline btn-sm m-btn-action" onclick="duplicateTransaction({{ tx.id }})" title="कॉपी">📋</button>
+                    <button type="button" class="btn btn-outline btn-sm m-btn-action" onclick="openEditTransaction({{ tx.id }})" title="एडिट">✏️</button>
+                    <button type="button" class="btn btn-danger btn-sm m-btn-action" onclick="deleteTransaction({{ tx.id }}, '{{ tx.voucher_no }}')" title="डिलीट">🗑️</button>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div style="text-align:center; padding: 2rem 1rem; color:var(--text-muted); background:#F8FAFC; border-radius:12px; border:1px dashed #CBD5E1;">
+            <div style="font-size:2rem; margin-bottom:0.4rem;">🏗️</div>
+            <div style="font-weight:700; color:var(--primary);">No transactions for this site</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- DESKTOP TABLE VIEW -->
+    <div class="table-responsive desktop-table-view">
         <table class="data-table">
             <thead>
                 <tr>

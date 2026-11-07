@@ -6,39 +6,46 @@
 
 {% block content %}
 <!-- QUICK DATE PILLS & CUSTOM RANGE -->
-<div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1rem; flex-wrap:wrap; background:#FFFFFF; padding:0.6rem 1rem; border-radius:10px; border:1px solid var(--border-color); box-shadow:var(--shadow-sm);">
-    <span style="font-size:0.82rem; font-weight:700; color:var(--primary); margin-right:4px;">⚡ Quick Filter:</span>
-    <button type="button" class="btn btn-sm {% if date_filter == 'today' %}btn-primary{% else %}btn-outline{% endif %}" onclick="setDateFilter('today')">
-        Today
-    </button>
-    <button type="button" class="btn btn-sm {% if date_filter == 'yesterday' %}btn-primary{% else %}btn-outline{% endif %}" onclick="setDateFilter('yesterday')">
-        Yesterday
-    </button>
-    <button type="button" class="btn btn-sm {% if date_filter == 'this_week' %}btn-primary{% else %}btn-outline{% endif %}" onclick="setDateFilter('this_week')">
-        This Week
-    </button>
-    <button type="button" class="btn btn-sm {% if date_filter == 'this_month' %}btn-primary{% else %}btn-outline{% endif %}" onclick="setDateFilter('this_month')">
-        This Month
-    </button>
-    <button type="button" class="btn btn-sm {% if (date_filter == 'all' or not date_filter) and not start_date and not end_date %}btn-primary{% else %}btn-outline{% endif %}" onclick="setDateFilter('all')">
-        All Dates
-    </button>
-
-    <!-- Custom Date Range -->
-    <div style="display:inline-flex; align-items:center; gap:0.35rem; margin-left:0.5rem; padding-left:0.5rem; border-left:1px solid var(--border-color);">
-        <span style="font-size:0.78rem; font-weight:600; color:var(--text-muted);">From:</span>
-        <input type="date" id="customStartDate" class="form-control" style="padding:0.25rem 0.5rem; font-size:0.8rem; width:135px;" value="{{ start_date }}">
-        <span style="font-size:0.78rem; font-weight:600; color:var(--text-muted);">To:</span>
-        <input type="date" id="customEndDate" class="form-control" style="padding:0.25rem 0.5rem; font-size:0.8rem; width:135px;" value="{{ end_date }}">
-        <button type="button" class="btn btn-sm btn-primary" onclick="applyCustomDateRange()">Apply</button>
-        {% if start_date or end_date %}
-        <button type="button" class="btn btn-sm btn-outline" onclick="setDateFilter('all')" title="Reset Date Range">✕</button>
-        {% endif %}
+<div class="quick-filter-bar">
+    <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+        <span style="font-size:0.85rem; font-weight:700; color:var(--primary);">⚡ Quick Filter:</span>
+        <span class="desktop-shortcut-hint" style="font-size:0.75rem; color:var(--text-muted);">
+            ⌨️ Press <strong>[+]</strong> for New Entry | <strong>[Alt+S]</strong> Add Site
+        </span>
     </div>
 
-    <span style="margin-left:auto; font-size:0.75rem; color:var(--text-muted);">
-        ⌨️ Press <strong>[+]</strong> or <strong>[Alt+N]</strong> for New Entry | <strong>[Alt+S]</strong> Add Site
-    </span>
+    <!-- Swipeable Pills on Mobile -->
+    <div class="pills-scroll">
+        <button type="button" class="btn btn-sm {% if date_filter == 'today' %}btn-primary{% else %}btn-outline{% endif %}" onclick="setDateFilter('today')">
+            Today
+        </button>
+        <button type="button" class="btn btn-sm {% if date_filter == 'yesterday' %}btn-primary{% else %}btn-outline{% endif %}" onclick="setDateFilter('yesterday')">
+            Yesterday
+        </button>
+        <button type="button" class="btn btn-sm {% if date_filter == 'this_week' %}btn-primary{% else %}btn-outline{% endif %}" onclick="setDateFilter('this_week')">
+            This Week
+        </button>
+        <button type="button" class="btn btn-sm {% if date_filter == 'this_month' %}btn-primary{% else %}btn-outline{% endif %}" onclick="setDateFilter('this_month')">
+            This Month
+        </button>
+        <button type="button" class="btn btn-sm {% if (date_filter == 'all' or not date_filter) and not start_date and not end_date %}btn-primary{% else %}btn-outline{% endif %}" onclick="setDateFilter('all')">
+            All Dates
+        </button>
+    </div>
+
+    <!-- Custom Date Range -->
+    <div class="custom-date-mobile">
+        <div class="custom-date-row">
+            <span style="font-size:0.78rem; font-weight:600; color:var(--text-muted);">From:</span>
+            <input type="date" id="customStartDate" class="form-control" value="{{ start_date }}">
+            <span style="font-size:0.78rem; font-weight:600; color:var(--text-muted);">To:</span>
+            <input type="date" id="customEndDate" class="form-control" value="{{ end_date }}">
+            <button type="button" class="btn btn-sm btn-primary" style="height:42px; min-width:60px;" onclick="applyCustomDateRange()">Apply</button>
+            {% if start_date or end_date %}
+            <button type="button" class="btn btn-sm btn-outline" style="height:42px;" onclick="setDateFilter('all')" title="Reset Date Range">✕</button>
+            {% endif %}
+        </div>
+    </div>
 </div>
 
 <!-- FILTER & ACTION TOOLBAR -->
@@ -91,7 +98,84 @@
         </div>
     </div>
 
-    <div class="table-responsive">
+    <!-- MOBILE VIEW TOGGLE (Cards vs Table) -->
+    <div class="mobile-view-toggle-bar">
+        <button type="button" class="btn-view-toggle active" id="btnViewCards" onclick="setMobileView('cards')">
+            📱 कार्ड्स व्यू (Cards)
+        </button>
+        <button type="button" class="btn-view-toggle" id="btnViewTable" onclick="setMobileView('table')">
+            📊 टेबल व्यू (Table)
+        </button>
+    </div>
+
+    <!-- MOBILE CARDS VIEW (Clean touch cards with zero horizontal scroll) -->
+    <div class="mobile-tx-cards-container">
+        {% for tx in transactions %}
+        <div class="mobile-tx-card {% if tx.tx_type == 'CREDIT' %}tx-card-credit{% else %}tx-card-debit{% endif %}" data-search="{{ tx.voucher_no|lower }} {{ tx.party_name|lower }} {{ tx.category|lower }} {{ tx.site_name|lower }} {{ tx.payment_mode|lower }} {{ (tx.reference_no or '')|lower }}">
+            <div class="m-card-top">
+                <div class="m-card-meta">
+                    <span class="m-date">📅 {{ tx.tx_date }}</span>
+                    <a href="{{ url_for('voucher_view', tx_id=tx.id) }}" class="m-voucher-chip">{{ tx.voucher_no }} 🖨️</a>
+                </div>
+                <span class="badge {% if tx.tx_type == 'CREDIT' %}badge-credit{% else %}badge-debit{% endif %}">
+                    {{ tx.tx_type }}
+                </span>
+            </div>
+
+            <div class="m-card-body">
+                <div class="m-party-name">{{ tx.party_name }}</div>
+                {% if tx.narration %}
+                <div class="m-narration">{{ tx.narration }}</div>
+                {% endif %}
+            </div>
+
+            <div class="m-card-tags">
+                {% if tx.tx_type == 'CREDIT' %}
+                <span class="badge" style="background:#EAF5EF; color:#065F46; border:1px solid #A7F3D0;">👤 Individual Inflow</span>
+                {% else %}
+                <span class="badge badge-site">🏗️ {{ tx.site_code }} — {{ tx.site_name }}</span>
+                {% endif %}
+                <span class="badge badge-cat">🏷️ {{ tx.category }}</span>
+                <span class="badge badge-mode">💳 {{ tx.payment_mode }}</span>
+                {% if tx.reference_no %}
+                <span class="badge" style="background:#F1F5F9; color:#475569;"># {{ tx.reference_no }}</span>
+                {% endif %}
+                {% if tx.attachment_path %}
+                <a href="{{ url_for('view_upload', filename=tx.attachment_path) }}" target="_blank" class="m-bill-chip">📎 Bill</a>
+                {% endif %}
+            </div>
+
+            <div class="m-card-footer">
+                <div class="m-card-amount {% if tx.tx_type == 'CREDIT' %}amount-credit{% else %}amount-debit{% endif %}">
+                    {% if tx.tx_type == 'CREDIT' %}+{% else %}-{% endif %} ₹ {{ "{:,.2f}".format(tx.amount) }}
+                </div>
+                <div class="m-card-actions">
+                    <a href="{{ url_for('voucher_view', tx_id=tx.id) }}" class="btn btn-outline btn-sm m-btn-action" title="वाउचर प्रिंट">
+                        🖨️
+                    </a>
+                    <button type="button" class="btn btn-outline btn-sm m-btn-action" onclick="duplicateTransaction({{ tx.id }})" title="कॉपी">
+                        📋
+                    </button>
+                    <button type="button" class="btn btn-outline btn-sm m-btn-action" onclick="openEditTransaction({{ tx.id }})" title="एडिट">
+                        ✏️
+                    </button>
+                    <button type="button" class="btn btn-danger btn-sm m-btn-action" onclick="deleteTransaction({{ tx.id }}, '{{ tx.voucher_no }}')" title="डिलीट">
+                        🗑️
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div style="text-align:center; padding: 2.5rem 1rem; color:var(--text-muted); background:#F8FAFC; border-radius:12px; border:1px dashed #CBD5E1;">
+            <div style="font-size:2rem; margin-bottom:0.4rem;">📑</div>
+            <div style="font-weight:700; color:var(--primary);">No transactions recorded yet</div>
+            <div style="font-size:0.85rem; margin-top:4px;">Click "+ New Entry" below to create your first transaction.</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- DESKTOP TABLE VIEW -->
+    <div class="table-responsive desktop-table-view">
         <table class="data-table" id="transactionsTable">
             <thead>
                 <tr>

@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="theme-color" content="#163F37">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Portal Login — MS Sandip Kumar Accounts & Finance</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
@@ -135,6 +138,31 @@
             color: #475569;
             margin-top: 1.5rem;
             line-height: 1.5;
+        }
+        @media (max-width: 480px) {
+            .login-page {
+                padding: 0.75rem;
+            }
+            .login-header {
+                padding: 1.5rem 1rem 1.25rem;
+            }
+            .login-logo {
+                width: 52px;
+                height: 52px;
+                font-size: 1.4rem;
+                margin-bottom: 0.75rem;
+            }
+            .login-body {
+                padding: 1.5rem 1.25rem;
+            }
+            .form-input-field {
+                font-size: 16px;
+                height: 46px;
+            }
+            .btn-login-submit {
+                height: 48px;
+                font-size: 1.05rem;
+            }
         }
     </style>
 </head>

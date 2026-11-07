@@ -15,18 +15,48 @@ document.addEventListener('DOMContentLoaded', () => {
 function initMobileNav() {
     const toggleBtn = document.getElementById('mobileMenuToggle');
     const sidebar = document.querySelector('.app-sidebar');
-    if (toggleBtn && sidebar) {
-        toggleBtn.addEventListener('click', () => {
-            sidebar.classList.toggle('mobile-open');
-        });
+    const backdrop = document.getElementById('sidebarBackdrop');
+    const closeBtn = document.getElementById('sidebarCloseBtn');
 
-        // Close sidebar on outside click
-        document.addEventListener('click', (e) => {
-            if (sidebar.classList.contains('mobile-open') && 
-                !sidebar.contains(e.target) && 
-                !toggleBtn.contains(e.target)) {
-                sidebar.classList.remove('mobile-open');
+    function openSidebar() {
+        if (!sidebar) return;
+        sidebar.classList.add('mobile-open');
+        if (backdrop) backdrop.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeSidebar() {
+        if (!sidebar) return;
+        sidebar.classList.remove('mobile-open');
+        if (backdrop) backdrop.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    if (toggleBtn && sidebar) {
+        toggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (sidebar.classList.contains('mobile-open')) {
+                closeSidebar();
+            } else {
+                openSidebar();
             }
+        });
+    }
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeSidebar);
+    }
+
+    if (backdrop) {
+        backdrop.addEventListener('click', closeSidebar);
+    }
+
+    // Close when clicking nav items inside sidebar on mobile
+    if (sidebar) {
+        sidebar.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                if (window.innerWidth <= 900) closeSidebar();
+            });
         });
     }
 }
@@ -82,6 +112,9 @@ function initTransactionModal() {
     function closeModal() {
         modal.classList.remove('active');
     }
+
+    // Expose openModal globally for desktop & mobile FAB
+    window.openTransactionModal = openModal;
 
     if (openBtn) {
         openBtn.addEventListener('click', () => openModal('create'));
@@ -278,7 +311,7 @@ function initTransactionModal() {
     };
 }
 
-// Live Search in Table
+// Live Search in Table & Mobile Cards
 function initLiveSearch() {
     const searchInput = document.getElementById('tableSearchInput');
     if (!searchInput) return;
@@ -286,17 +319,48 @@ function initLiveSearch() {
     searchInput.addEventListener('input', (e) => {
         const query = e.target.value.toLowerCase().trim();
         const rows = document.querySelectorAll('.data-table tbody tr');
+        const cards = document.querySelectorAll('.mobile-tx-card');
 
         rows.forEach(row => {
             const text = row.textContent.toLowerCase();
-            if (text.includes(query)) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
+            row.style.display = text.includes(query) ? '' : 'none';
+        });
+
+        cards.forEach(card => {
+            const text = (card.getAttribute('data-search') || card.textContent).toLowerCase();
+            card.style.display = text.includes(query) ? 'flex' : 'none';
         });
     });
 }
+
+// Mobile View Mode Switcher (Cards vs Table)
+window.setMobileView = function(mode) {
+    const tableCards = document.querySelectorAll('.table-card');
+    const btnCards = document.getElementById('btnViewCards');
+    const btnTable = document.getElementById('btnViewTable');
+
+    if (mode === 'table') {
+        tableCards.forEach(tc => tc.classList.add('view-mode-table'));
+        if (btnCards) btnCards.classList.remove('active');
+        if (btnTable) btnTable.classList.add('active');
+        try { localStorage.setItem('ms_mobile_view', 'table'); } catch(e){}
+    } else {
+        tableCards.forEach(tc => tc.classList.remove('view-mode-table'));
+        if (btnCards) btnCards.classList.add('active');
+        if (btnTable) btnTable.classList.remove('active');
+        try { localStorage.setItem('ms_mobile_view', 'cards'); } catch(e){}
+    }
+};
+
+// Auto restore view preference
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        const pref = localStorage.getItem('ms_mobile_view');
+        if (pref === 'table') {
+            window.setMobileView('table');
+        }
+    } catch(e){}
+});
 
 // Dynamic Filter Helpers (FY, Month, Site)
 function initFilters() {
